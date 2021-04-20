@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -8,13 +7,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -90,11 +86,13 @@ namespace cip_api
 
                                     JObject data = JObject.Parse("{" + claimed.ToString() + "}");
 
-                                    string username = data["user"]["username"].ToString();
+                                    string username = data["user"]["empNo"].ToString();
                                     string dept = data["user"]["dept"].ToString();
+                                    string deptCode = data["user"]["deptCode"].ToString();
 
                                     identity.AddClaim(new Claim("username", username));
                                     identity.AddClaim(new Claim("dept", dept));
+                                    identity.AddClaim(new Claim("deptCode", deptCode));
                                 }
                             }
                         }
@@ -105,7 +103,7 @@ namespace cip_api
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "api", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "CIP system", Version = "v1" });
             });
         }
 
@@ -116,7 +114,10 @@ namespace cip_api
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "api v1"));
+                app.UseSwaggerUI(c =>
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIP system v1")
+                    // c.SwaggerEndpoint("/api-acc-cip/swagger/v1/swagger.json", "CIP system v1")
+                );
             }
 
             app.UseCors(options =>
@@ -127,7 +128,9 @@ namespace cip_api
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            // db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
+
             app.UseAuthentication();
             app.UseAuthorization();
 

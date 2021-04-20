@@ -1,11 +1,14 @@
 
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace cip_api.models {
 
     public class cipSchema {
-        [Key]
+        // [Key]
+        [Key, Column(TypeName="int"), StringLength(6)]
         public int id { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(10)]
@@ -65,26 +68,31 @@ namespace cip_api.models {
         [Column(TypeName="nvarchar"), StringLength(15)]
         public string totalJpy_1 { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(15)]
+        [Column(TypeName="nvarchar"), StringLength(30)]
         public string totalThb_1 { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(15)]
+        [Column(TypeName="nvarchar"), StringLength(30)]
         public string perUnitThb { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(5)]
         public string cc { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(15)]
+        [Column(TypeName="nvarchar"), StringLength(30), DefaultValue("-")]
         public string totalOfCip { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(20)]
+        [Column(TypeName="nvarchar"), StringLength(20), DefaultValue("-")]
         public string budgetCode { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(10)]
+        [Column(TypeName="nvarchar"), StringLength(10), DefaultValue("-")]
         public string prDieJig { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(10)]
+        [Column(TypeName="nvarchar"), StringLength(10), DefaultValue("-") ]
         public string model { get; set; }
+
+        [Column(TypeName="nvarchar"), StringLength(15), DefaultValue("-") ]
+
+        public ICollection<cipUpdateSchema> cip { get; set; }
+        public string status { get; set; }
 
     }
 }
