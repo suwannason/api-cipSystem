@@ -7,4 +7,5 @@ public class Database : DbContext {
     public DbSet<cipSchema> CIP { get; set; }
     public DbSet<cipUpdateSchema> CIP_UPDATE { get; set; }
     public DbSet<ApprovalSchema> APPROVAL { get; set; }
+    public DbSet<userSchema> USERS { get; set; }
 }

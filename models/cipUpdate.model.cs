@@ -62,6 +62,9 @@ namespace cip_api.models {
 
         [Column(TypeName="nvarchar"), StringLength(10)]
         public string boiType { get; set; }
+
+        [Column(TypeName="nvarchar"), StringLength(10)]
+        public string createDate { get; set; }
         public ICollection<ApprovalSchema> approval { get; set; }
 
     }

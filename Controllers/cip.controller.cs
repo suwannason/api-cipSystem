@@ -10,6 +10,8 @@ using OfficeOpenXml;
 using System.Collections.Generic;
 
 using System.Linq;
+using System;
+using System.Threading.Tasks;
 
 namespace cip_api.controllers
 {
@@ -41,18 +43,17 @@ namespace cip_api.controllers
             {
                 Directory.CreateDirectory(serverPath);
             }
-            FileStream strem = System.IO.File.Create($"{serverPath}{body.file.FileName}");
+            string fileName = System.Guid.NewGuid().ToString() + "-" + body.file.FileName;
+            FileStream strem = System.IO.File.Create($"{serverPath}{fileName}");
             body.file.CopyTo(strem);
             strem.Close();
 
-
-            string path = $"{serverPath}{body.file.FileName}";
+            string path = $"{serverPath}{fileName}";
             FileInfo Existfile = new FileInfo(path);
-
 
             List<cipSchema> excelData = new List<cipSchema>();
 
-            if (User.FindFirst("dept").Value.ToLower() == "acc")
+            if (User.FindFirst("dept").Value.ToLower() == "acc" || User.FindFirst("dept").Value.ToLower() == "admin")
             {
                 using (ExcelPackage excel = new ExcelPackage(Existfile))
                 {
@@ -103,6 +104,7 @@ namespace cip_api.controllers
                                 case 26: item.model = value; break;
                             }
                             item.status = "open";
+                            item.createDate = System.DateTime.Now.ToString("yyyyMMdd");
                         }
                         excelData.Add(item);
                     }
@@ -126,7 +128,7 @@ namespace cip_api.controllers
                 {
                     cipUpdateSchema item = new cipUpdateSchema();
 
-                   
+
                     for (int col = 1; col <= colCount; col += 1)
                     {
                         string value = sheet.Cells[row, col].Value?.ToString();
@@ -138,7 +140,8 @@ namespace cip_api.controllers
                         {
                             case 1:
                                 cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && item.status == "open").FirstOrDefault();
-                                if (data != null) {
+                                if (data != null)
+                                {
                                     item.cipSchemaid = data.id;
                                 }
                                 break;
@@ -159,7 +162,7 @@ namespace cip_api.controllers
                             case 40: item.newBFMorAddBFM = value; break;
                             case 41: item.reasonForDelay = value; break;
                             case 42: item.remark = value; break;
-                            case 43: item.boiType = value; break; 
+                            case 43: item.boiType = value; break;
                         }
                     }
                     items.Add(item);
@@ -173,10 +176,20 @@ namespace cip_api.controllers
         [HttpGet("list")]
         public ActionResult list()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "open")
-            .Select(fields =>
-            new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id })
-            .ToList<cipSchema>();
+            List<cipSchema> data = null;
+            if (User.FindFirst("dept").Value.ToLower() == "acc" || User.FindFirst("dept").Value.ToLower() == "admin")
+            {
+                data = db.CIP.Where<cipSchema>(item => item.status == "open")
+               .Select(fields =>
+               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id })
+               .ToList<cipSchema>();
+                return Ok(new { success = true, data, });
+            }
+            string deptCode = User.FindFirst("deptCode")?.Value;
+            data = db.CIP.Where<cipSchema>(item => item.status == "open" && item.cc == deptCode)
+               .Select(fields =>
+               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id })
+               .ToList<cipSchema>();
             return Ok(new { success = true, data, });
         }
         [HttpGet("history")]
@@ -185,9 +198,95 @@ namespace cip_api.controllers
             return Ok(new { success = true });
         }
 
-        [HttpGet("download")]
-        public ActionResult download() {
-            return Ok();
+        [HttpPatch("download")]
+        public ActionResult download(cipDownlode body)
+        {
+            try
+            {
+                string deptCode = User.FindFirst("deptCode")?.Value;
+                string empNo = User.FindFirst("empNo")?.Value;
+                string dept = User.FindFirst("dept")?.Value;
+
+                List<cipSchema> data = new List<cipSchema>();
+                if (body.id.Length == 0)
+                {
+                    if (dept.ToLower() != "acc" && dept != "admin")
+                    {
+                        data = db.CIP.Where<cipSchema>(item => item.cc == deptCode && item.status == "open").ToList<cipSchema>();
+                    }
+                    else
+                    {
+                        Console.WriteLine("ELSE");
+                        data = db.CIP.Where<cipSchema>(item => item.status == "open").ToList<cipSchema>();
+                        Console.WriteLine("Case else: "+data.Count);
+                    }
+                }
+                else
+                {
+                    foreach (int id in body.id)
+                    {
+                        cipSchema item = db.CIP.Find(id);
+                        data.Add(item);
+                    }
+                }
+
+                MemoryStream stream = new MemoryStream();
+                using (ExcelPackage excel = new ExcelPackage(stream))
+                {
+                    excel.Workbook.Worksheets.Add("sheet1");
+
+                    List<string[]> header = new List<string[]>()
+                {
+                    new string[] { "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
+                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT (THB/JPY/USD)",
+                    "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
+                    "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model",
+                    "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
+                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "Process Die", "Model",
+                    "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay",
+                    "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
+                    }
+                };
+
+                    string headerRange = "A1:AQ1";
+                    ExcelWorksheet worksheet = excel.Workbook.Worksheets["sheet1"];
+                    worksheet.Cells[headerRange].LoadFromArrays(header);
+
+                    string rootFolder = Directory.GetCurrentDirectory();
+                    string pathString2 = @"\API site\files\CIP-system\download\";
+                    string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
+
+                    if (!Directory.Exists(serverPath))
+                    {
+                        Directory.CreateDirectory(serverPath);
+                    }
+                    int row = 2;
+                    foreach (cipSchema item in data)
+                    {
+                        List<string[]> cellData = new List<string[]>()
+                    {
+                        new string [] {
+                            item.cipNo, item.subCipNo, item.vendorCode, item.vendor, item.acqDate, item.invDate, item.receivedDate,
+                             item.invNo, item.name, item.qty, item.exRate, item.cur, item.perUnit, item.totalJpy, item.totalThb, item.averageFreight,
+                             item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
+                             item.model
+                        }
+                    };
+                        worksheet.Cells[row, 1].LoadFromArrays(cellData);
+                        row = row + 1;
+                    }
+                    string fileName = System.Guid.NewGuid().ToString() + "-" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
+                    excel.SaveAs(new FileInfo(serverPath + fileName));
+
+                    stream.Position = 0;
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", serverPath + fileName);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+                return Ok();
+            }
         }
     }
 }

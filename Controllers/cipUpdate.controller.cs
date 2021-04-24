@@ -5,6 +5,8 @@ using cip_api.request;
 using cip_api.models;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using System;
 
 namespace cip_api.controllers
 {
@@ -48,7 +50,8 @@ namespace cip_api.controllers
                         result = body.result,
                         serialNo = body.serialNo,
                         tranferToSupplier = body.tranferToSupplier,
-                        upFixAsset = body.upFixAsset
+                        upFixAsset = body.upFixAsset,
+                        createDate = DateTime.Now.ToString("yyyyMMdd")
                     };
                     cipUpdate.Add(data);
                     cipSchema cip = db.CIP.Find(item);
@@ -67,7 +70,7 @@ namespace cip_api.controllers
             }
         }
 
-         [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult OK(cipUpdate body)
         {
             try
@@ -112,6 +115,20 @@ namespace cip_api.controllers
 
                 return Problem(e.StackTrace);
             }
+        }
+
+        [HttpGet("{cipId}")]
+        public ActionResult getByCIPid(int cipId)
+        {
+
+            cipUpdateSchema data = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == cipId).FirstOrDefault<cipUpdateSchema>();
+
+            return Ok(new
+            {
+                success = true,
+                message = "CIP update",
+                data,
+            });
         }
     }
 }
