@@ -9,9 +9,16 @@ namespace cip_api.models
 
         [Key]
         public int id { get; set; }
-        public string onApproveStep { get; set; } // input, check approve
-        public string empNo { get; set; }
 
-        public int cipUpdateid { get; set; }
+        [Column(TypeName = "nvarchar"), StringLength(10), Required]
+        public string onApproveStep { get; set; } // cc-prepared, cc-checked, cc-approved, --> cost-checked, cost-approveed
+        
+        [Column(TypeName="nvarchar"), StringLength(15)]
+        public string empNo { get; set; }
+        [ForeignKey("cipSchemaid"), Column(TypeName = "int"), StringLength(6), Required]
+        public int cipSchemaid { get; set; }
+
+        [Column(TypeName = "nvarchar"), StringLength(15)]
+        public string date { get; set; }
     }
 }

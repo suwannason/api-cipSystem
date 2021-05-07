@@ -8,4 +8,5 @@ public class Database : DbContext {
     public DbSet<cipUpdateSchema> CIP_UPDATE { get; set; }
     public DbSet<ApprovalSchema> APPROVAL { get; set; }
     public DbSet<userSchema> USERS { get; set; }
+    public DbSet<NotificationSchema> NOTIFICATIONS { get; set; }
 }

@@ -47,11 +47,12 @@ namespace cip_api.controllers
                     users user = new users
                     {
                         band = "admin",
-                        dept = "admin",
-                        deptCode = "admin",
+                        dept = "ACC",
+                        deptCode = "acc",
                         div = "admin",
                         name = "CIP" + " " + "ADMIN",
-                        empNo = "admin"
+                        empNo = "admin",
+                        action = "approver"
                     };
                     string token = GenerateJSONWebToken(user);
                     return Ok(new { success = true, message = "Logon success", token, data = user });
@@ -67,12 +68,17 @@ namespace cip_api.controllers
 
                     LdapResponse data = JsonConvert.DeserializeObject<LdapResponse>(await response.Content.ReadAsStringAsync());
                     // response.EnsureSuccessStatusCode();
-                    if (data == null)
+                    if (data.success == false)
                     {
                         return BadRequest(new { success = false, message = "Username or password incorrect" });
                     }
                     client.Dispose();
 
+                    userSchema userSystem = db.USERS.Find(body.username);
+
+                    if (userSystem == null) {
+                        return Unauthorized(new { success = false, message = "Please contact admin to register system." });
+                    }
                     users user = new users
                     {
                         band = data.data.band,
@@ -80,7 +86,8 @@ namespace cip_api.controllers
                         deptCode = data.data.deptCode,
                         div = data.data.divShortName,
                         name = data.data.fnameEn + " " + data.data.lnameEn,
-                        empNo = data.data.empNo
+                        empNo = data.data.empNo,
+                        action = userSystem.action
                     };
                     string token = GenerateJSONWebToken(user);
 
@@ -101,7 +108,7 @@ namespace cip_api.controllers
             var token = new JwtSecurityToken(_config["Jwt:Issuser"],
               _config["Jwt:Issuser"],
               null,
-              expires: DateTime.Now.AddHours(8),
+              expires: DateTime.Now.AddMonths(8),
               signingCredentials: credentials);
 
             token.Payload["user"] = userInfo;

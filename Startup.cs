@@ -89,10 +89,12 @@ namespace cip_api
                                     string username = data["user"]["empNo"].ToString();
                                     string dept = data["user"]["dept"].ToString();
                                     string deptCode = data["user"]["deptCode"].ToString();
+                                    string action = data["user"]["action"].ToString();
 
                                     identity.AddClaim(new Claim("username", username));
                                     identity.AddClaim(new Claim("dept", dept));
                                     identity.AddClaim(new Claim("deptCode", deptCode));
+                                    identity.AddClaim(new Claim("action", action));
                                 }
                             }
                         }
@@ -128,7 +130,7 @@ namespace cip_api
             app.UseHttpsRedirection();
 
             app.UseRouting();
-            // db.Database.EnsureDeleted();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             app.UseAuthentication();

@@ -16,6 +16,7 @@ namespace cip_api.models
         public string div { get; set; }
         public string band { get; set; }
         public string name { get; set; }
+        public string action { get; set; }
     }
 
     public class userSchema {
@@ -24,5 +25,6 @@ namespace cip_api.models
         public string empNo { get; set; }
         [Column(TypeName="nvarchar"), StringLength(20)]
         public string action { get; set; }
+        public ICollection<NotificationSchema> nitification { get; set; }
     }
 }

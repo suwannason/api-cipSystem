@@ -1,6 +1,5 @@
 
 using Microsoft.AspNetCore.Mvc;
-
 using cip_api.request.cip;
 using cip_api.models;
 using Microsoft.Extensions.Configuration;
@@ -8,10 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using System.IO;
 using OfficeOpenXml;
 using System.Collections.Generic;
-
 using System.Linq;
 using System;
-using System.Threading.Tasks;
 
 namespace cip_api.controllers
 {
@@ -53,7 +50,7 @@ namespace cip_api.controllers
 
             List<cipSchema> excelData = new List<cipSchema>();
 
-            if (User.FindFirst("dept").Value.ToLower() == "acc" || User.FindFirst("dept").Value.ToLower() == "admin")
+            if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
                 using (ExcelPackage excel = new ExcelPackage(Existfile))
                 {
@@ -104,7 +101,7 @@ namespace cip_api.controllers
                                 case 26: item.model = value; break;
                             }
                             item.status = "open";
-                            item.createDate = System.DateTime.Now.ToString("yyyyMMdd");
+                            item.createDate = System.DateTime.Now.ToString("yyyy/MM/dd");
                         }
                         excelData.Add(item);
                     }
@@ -115,6 +112,8 @@ namespace cip_api.controllers
             }
 
             List<cipUpdateSchema> items = new List<cipUpdateSchema>();
+
+            List<cipSchema> updateStatus = new List<cipSchema>();
 
             using (ExcelPackage excel = new ExcelPackage(Existfile))
             {
@@ -143,6 +142,8 @@ namespace cip_api.controllers
                                 if (data != null)
                                 {
                                     item.cipSchemaid = data.id;
+                                    data.status = "save";
+                                    updateStatus.Add(data);
                                 }
                                 break;
 
@@ -164,11 +165,16 @@ namespace cip_api.controllers
                             case 42: item.remark = value; break;
                             case 43: item.boiType = value; break;
                         }
+                        item.status = "active";
+                        item.createDate = DateTime.Now.ToString("yyyy/MM/dd");
+
                     }
                     items.Add(item);
                 }
             }
             db.CIP_UPDATE.AddRange(items);
+            db.CIP.UpdateRange(updateStatus);
+
             db.SaveChanges();
             return Ok();
         }
@@ -177,7 +183,7 @@ namespace cip_api.controllers
         public ActionResult list()
         {
             List<cipSchema> data = null;
-            if (User.FindFirst("dept").Value.ToLower() == "acc" || User.FindFirst("dept").Value.ToLower() == "admin")
+            if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
                 data = db.CIP.Where<cipSchema>(item => item.status == "open")
                .Select(fields =>
@@ -218,7 +224,7 @@ namespace cip_api.controllers
                     {
                         Console.WriteLine("ELSE");
                         data = db.CIP.Where<cipSchema>(item => item.status == "open").ToList<cipSchema>();
-                        Console.WriteLine("Case else: "+data.Count);
+                        Console.WriteLine("Case else: " + data.Count);
                     }
                 }
                 else
@@ -287,6 +293,22 @@ namespace cip_api.controllers
                 Console.WriteLine(e.StackTrace);
                 return Ok();
             }
+        }
+
+        [HttpGet("{id}")]
+        public ActionResult getById(string id)
+        {
+            Int32 cipId = Int32.Parse(id);
+            cipSchema cip = db.CIP.Find(cipId);
+
+            db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == cipId).FirstOrDefault();
+            db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == cipId).ToList<ApprovalSchema>();
+            
+            return Ok(new
+            {
+                success = true,
+                data = cip,
+            });
         }
     }
 }

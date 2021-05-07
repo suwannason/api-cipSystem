@@ -9,7 +9,7 @@ namespace cip_api.models {
         [Key]
         public int id { get; set; }
 
-        [ForeignKey("cipSchemaid"), Column(TypeName="int"), StringLength(6), Required]
+        [ForeignKey("cipSchema"), Column(TypeName="int"), StringLength(6), Required]
         public int cipSchemaid { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(15)]
@@ -65,7 +65,10 @@ namespace cip_api.models {
 
         [Column(TypeName="nvarchar"), StringLength(10)]
         public string createDate { get; set; }
-        public ICollection<ApprovalSchema> approval { get; set; }
+
+        [Column(TypeName="nvarchar"), StringLength(10)]
+        public string status { get; set; }
+        // public virtual cipSchema cip { get; set; }
 
     }
 }

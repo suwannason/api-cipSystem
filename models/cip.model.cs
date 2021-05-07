@@ -95,8 +95,8 @@ namespace cip_api.models
         public string createDate { get; set; }
 
         [Column(TypeName = "nvarchar"), StringLength(15), DefaultValue("-")]
-
-        public ICollection<cipUpdateSchema> cip { get; set; }
+        public virtual cipUpdateSchema cipUpdate { get; set; }
+        public ICollection<ApprovalSchema> approval { get; set; }
         public string status { get; set; }
 
     }
