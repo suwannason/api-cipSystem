@@ -8,7 +8,7 @@ namespace cip_api.models
     {
         [Key]
         public int id { get; set; }
-        [ForeignKey("userSchemaempNo"), Column(TypeName = "nvarchar"), StringLength(6)]
+        [ForeignKey("userSchemaempNo"), Column(TypeName = "nvarchar"), StringLength(10)]
         public string userSchemaempNo { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(8), Required]

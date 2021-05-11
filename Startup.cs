@@ -128,9 +128,8 @@ namespace cip_api
             });
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-            db.Database.EnsureDeleted();
+            // db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
 
             app.UseAuthentication();

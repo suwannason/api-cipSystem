@@ -7,6 +7,7 @@ using cip_api.models;
 using cip_api.request;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace cip_api.controllers
 {
@@ -21,6 +22,11 @@ namespace cip_api.controllers
             db = _db;
             _config = config;
             ldap_auth = setting.ldap_auth;
+        }
+
+        private List<PermissionSchema> GetPermissions(string empNo)
+        {
+            return db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == empNo).ToList<PermissionSchema>();
         }
 
         [HttpGet("draft")]
@@ -42,18 +48,21 @@ namespace cip_api.controllers
         [HttpGet("cc")]
         public ActionResult cc()
         {
-            string deptCode = User.FindFirst("deptCode")?.Value;
-            string action = User.FindFirst("action")?.Value;
 
-            System.Console.WriteLine("action: " + action);
-            List<cipSchema> data = null;
-            if (action == "checker")
+            string username = User.FindFirst("username")?.Value;
+            List<PermissionSchema> permissions = GetPermissions(username);
+
+            PermissionSchema checker = permissions.Find(e => e.action == "checker");
+            PermissionSchema approver = permissions.Find(e => e.action == "approver");
+
+            List<cipSchema> data = new List<cipSchema>();
+            if (checker != null)
             {
-                data = db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == deptCode).ToList<cipSchema>();
+                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
             }
-            else if (action == "approver")
+            if (approver != null)
             {
-                data = db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == deptCode).ToList<cipSchema>();
+                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == approver.deptCode).ToList<cipSchema>());
             }
 
             return Ok(
@@ -69,16 +78,124 @@ namespace cip_api.controllers
         [HttpGet("costCenter")]
         public ActionResult costCenter()
         {
-            return Ok();
+            string deptCode = User.FindFirst("deptCode")?.Value;
+
+            string username = User.FindFirst("username")?.Value;
+            List<PermissionSchema> permissions = GetPermissions(username);
+
+            PermissionSchema checker = permissions.Find(e => e.action == "checker");
+            PermissionSchema approver = permissions.Find(e => e.action == "approver");
+
+            List<cipSchema> data = new List<cipSchema>();
+            if (checker != null)
+            {
+                data = db.CIP.Where<cipSchema>(item => item.status == "cc-approved" && item.cipUpdate.costCenterOfUser != item.cc).ToList();
+            }
+            if (approver != null)
+            {
+                data = db.CIP.Where<cipSchema>(item => item.status == "cost-checked" && item.cipUpdate.costCenterOfUser != item.cc).ToList();
+            }
+
+            return Ok(new { success = true, message = "CIP on Cost center.", data, });
         }
 
-        [HttpPut("approve")]
-        public ActionResult approve(Approve body) {
+        [HttpPut("approve/cc")]
+        public ActionResult approve(Approve body)
+        {
+            List<cipSchema> updateRange = new List<cipSchema>();
+            List<ApprovalSchema> approvals = new List<ApprovalSchema>();
+            string username = User.FindFirst("username")?.Value;
 
-            foreach (string item in body.id) {
-                
+            List<PermissionSchema> permissions = GetPermissions(username);
+
+            PermissionSchema checker = permissions.Find(e => e.action == "checker");
+            PermissionSchema approver = permissions.Find(e => e.action == "approver");
+
+            string status = "";
+            foreach (string item in body.id)
+            {
+                Int32 id = Int32.Parse(item);
+                ApprovalSchema approve = new ApprovalSchema();
+                cipSchema data = db.CIP.Find(id);
+
+                if (data.cc == checker.deptCode)
+                {
+                    data.status = "cc-checked";
+                    status = "cc-checked";
+                }
+                else if (data.cc == approver.deptCode)
+                {
+                    data.status = "cc-approved";
+                    status = "cc-approved";
+                }
+                approve.onApproveStep = status;
+                approve.empNo = username;
+                approve.cipSchemaid = id;
+                approve.date = DateTime.Now.ToString("yyyy/MM/dd");
+
+                updateRange.Add(data);
+                approvals.Add(approve);
             }
-            return Ok();
+
+            db.CIP.UpdateRange(updateRange);
+            db.APPROVAL.AddRange(approvals);
+            db.SaveChanges();
+
+            return Ok(new
+            {
+                success = true,
+                message = "Approve CIP success"
+            });
+        }
+
+        [HttpPut("approve/costCenter")]
+        public ActionResult costCenter(Approve body)
+        {
+            List<cipSchema> updateRange = new List<cipSchema>();
+            List<ApprovalSchema> approvals = new List<ApprovalSchema>();
+            string username = User.FindFirst("username")?.Value;
+
+            List<PermissionSchema> permissions = GetPermissions(username);
+
+            PermissionSchema checker = permissions.Find(e => e.action == "checker");
+            PermissionSchema approver = permissions.Find(e => e.action == "approver");
+
+            string status = "";
+
+            foreach (string item in body.id)
+            {
+                Int32 id = Int32.Parse(item);
+                ApprovalSchema approve = new ApprovalSchema();
+                cipSchema data = db.CIP.Find(id);
+                
+                if (data.cc == checker.deptCode)
+                {
+                    status = "cc-checked";
+                }
+                else if (data.cc == approver.deptCode)
+                {
+                    status = "cc-approved";
+                }
+
+                data.status = status;
+
+                approve.onApproveStep = status;
+                approve.empNo = username;
+                approve.cipSchemaid = id;
+                approve.date = DateTime.Now.ToString("yyyy/MM/dd");
+
+                updateRange.Add(data);
+                approvals.Add(approve);
+            }
+            db.CIP.UpdateRange(updateRange);
+            db.APPROVAL.AddRange(approvals);
+            db.SaveChanges();
+
+            return Ok(new
+            {
+                success = true,
+                message = "Approve CIP success"
+            });
         }
     }
 }

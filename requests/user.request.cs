@@ -27,4 +27,8 @@ namespace cip_api.request.user
         public string DEPT_ABB_NAME { get; set; }
         public string DIV_NAME_WC { get; set; }
     }
+    public class Upload {
+
+        public Microsoft.AspNetCore.Http.IFormFile file { get; set;}
+    }
 }

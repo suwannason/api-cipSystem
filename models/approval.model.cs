@@ -10,7 +10,7 @@ namespace cip_api.models
         [Key]
         public int id { get; set; }
 
-        [Column(TypeName = "nvarchar"), StringLength(10), Required]
+        [Column(TypeName = "nvarchar"), StringLength(15), Required]
         public string onApproveStep { get; set; } // cc-prepared, cc-checked, cc-approved, --> cost-checked, cost-approveed
         
         [Column(TypeName="nvarchar"), StringLength(15)]
@@ -18,7 +18,7 @@ namespace cip_api.models
         [ForeignKey("cipSchemaid"), Column(TypeName = "int"), StringLength(6), Required]
         public int cipSchemaid { get; set; }
 
-        [Column(TypeName = "nvarchar"), StringLength(15)]
+        [Column(TypeName = "nvarchar"), StringLength(20)]
         public string date { get; set; }
     }
 }
