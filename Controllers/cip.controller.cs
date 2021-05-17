@@ -1,6 +1,6 @@
 
 using Microsoft.AspNetCore.Mvc;
-using cip_api.request.cip;
+using cip_api.request;
 using cip_api.models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +9,7 @@ using OfficeOpenXml;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.Drawing;
 
 namespace cip_api.controllers
 {
@@ -49,7 +50,7 @@ namespace cip_api.controllers
             FileInfo Existfile = new FileInfo(path);
 
             List<cipSchema> excelData = new List<cipSchema>();
-
+            string dateNow = DateTime.Now.ToString("yyyy/MM/dd");
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
                 using (ExcelPackage excel = new ExcelPackage(Existfile))
@@ -60,7 +61,7 @@ namespace cip_api.controllers
                     int colCount = sheet.Dimension.End.Column;
                     int rowCount = sheet.Dimension.End.Row;
 
-                    for (int row = 2; row < rowCount; row += 1)
+                    for (int row = 3; row < rowCount; row += 1)
                     {
                         cipSchema item = new cipSchema();
 
@@ -103,7 +104,10 @@ namespace cip_api.controllers
                             item.status = "open";
                             item.createDate = System.DateTime.Now.ToString("yyyy/MM/dd");
                         }
-                        excelData.Add(item);
+                        if (item.cipNo != "-")
+                        {
+                            excelData.Add(item);
+                        }
                     }
                 }
                 db.CIP.AddRange(excelData);
@@ -123,7 +127,7 @@ namespace cip_api.controllers
                 int colCount = sheet.Dimension.End.Column;
                 int rowCount = sheet.Dimension.End.Row;
 
-                for (int row = 2; row < rowCount; row += 1)
+                for (int row = 3; row < rowCount; row += 1)
                 {
                     cipUpdateSchema item = new cipUpdateSchema();
 
@@ -138,6 +142,10 @@ namespace cip_api.controllers
                         switch (col)
                         {
                             case 1:
+                                if (value == "-")
+                                {
+                                    break;
+                                }
                                 cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && item.status == "open").FirstOrDefault();
                                 if (data != null)
                                 {
@@ -166,16 +174,34 @@ namespace cip_api.controllers
                             case 43: item.boiType = value; break;
                         }
                         item.status = "active";
-                        item.createDate = DateTime.Now.ToString("yyyy/MM/dd");
+                        item.createDate = dateNow;
 
                     }
-                    items.Add(item);
+                    if (item.cipSchemaid != 0)
+                    {
+                        items.Add(item);
+                    }
                 }
             }
+            List<ApprovalSchema> prepare = new List<ApprovalSchema>();
+
+            string preparer = User.FindFirst("username").Value;
+            foreach (cipSchema item in updateStatus)
+            {
+                prepare.Add(new ApprovalSchema
+                {
+                    cipSchemaid = item.id,
+                    date = dateNow,
+                    empNo = preparer,
+                    onApproveStep = "save"
+                });
+            }
+
+            db.APPROVAL.AddRange(prepare);
             db.CIP_UPDATE.AddRange(items);
             db.CIP.UpdateRange(updateStatus);
-
             db.SaveChanges();
+
             return Ok();
         }
 
@@ -185,13 +211,14 @@ namespace cip_api.controllers
             List<cipSchema> data = null;
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
-                data = db.CIP.Where<cipSchema>(item => item.status == "open")
+                data = db.CIP.Where<cipSchema>(item => item.status == "open" || item.status == "reject")
                .Select(fields =>
-               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id })
+               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id, status = fields.status })
                .ToList<cipSchema>();
                 return Ok(new { success = true, data, });
             }
             string deptCode = User.FindFirst("deptCode")?.Value;
+
             data = db.CIP.Where<cipSchema>(item => item.status == "open" && item.cc == deptCode)
                .Select(fields =>
                new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id })
@@ -199,9 +226,10 @@ namespace cip_api.controllers
             return Ok(new { success = true, data, });
         }
         [HttpGet("history")]
-        public ActionResult history()
+        public ActionResult history(DateRange body)
         {
-            return Ok(new { success = true });
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => String.Compare(item.createDate, body.startDate) == 1 && String.Compare(item.createDate, body.endDate) == -1).ToList();
+            return Ok(new { success = true, data, });
         }
 
         [HttpPatch("download")]
@@ -244,7 +272,7 @@ namespace cip_api.controllers
                     List<string[]> header = new List<string[]>()
                 {
                     new string[] { "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
-                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT (THB/JPY/USD)",
+                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (THB/JPY/USD)",
                     "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
                     "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model",
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
@@ -254,7 +282,7 @@ namespace cip_api.controllers
                     }
                 };
 
-                    string headerRange = "A1:AQ1";
+                    string headerRange = "A2:AQ2";
                     ExcelWorksheet worksheet = excel.Workbook.Worksheets["sheet1"];
                     worksheet.Cells[headerRange].LoadFromArrays(header);
 
@@ -266,7 +294,53 @@ namespace cip_api.controllers
                     {
                         Directory.CreateDirectory(serverPath);
                     }
-                    int row = 2;
+                    worksheet.Cells["A1:Z1"].Merge = true;
+                    worksheet.Cells["A1"].Value = "Data for Accounting Dept.";
+                    worksheet.Cells["A1"].Style.Font.Bold = true;
+                    worksheet.Cells["A1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#9FE5E6"));
+                    worksheet.Cells["A1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["A1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+
+                    worksheet.Cells["AA1:AQ1"].Merge = true;
+                    worksheet.Cells["AA1"].Value = "Data for User confirm";
+                    worksheet.Cells["AA1"].Style.Font.Bold = true;
+                    worksheet.Cells["AA1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                    worksheet.Cells["AA1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["AA1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+
+                    worksheet.Cells["AA2:AP2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F1ECB9"));
+                    worksheet.Cells["AQ2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#57A868"));
+
+                    worksheet.Column(1).Width = 5;
+                    worksheet.Column(2).Width = 4;
+                    worksheet.Column(6).Width = 11;
+                    worksheet.Column(10).Width = 11;
+                    worksheet.Column(11).Width = 4; // Qty.
+                    worksheet.Column(14).Width = 13;
+                    worksheet.Column(15).Width = 12;
+                    worksheet.Column(17).Width = 12;
+                    worksheet.Column(18).Width = 12;
+                    worksheet.Column(19).Width = 12;
+                    worksheet.Column(23).Width = 12;
+                    worksheet.Column(25).Width = 12; // AA
+                    worksheet.Column(41).Width = 12; // AO
+                    worksheet.Column(43).Width = 15; // AO
+                    worksheet.Row(2).Height = 80;
+                    worksheet.Row(1).Height = 30;
+                    worksheet.Row(2).Style.Font.Bold = true;
+                    worksheet.Row(2).Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+                    worksheet.Row(2).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["A2:P2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                    worksheet.Cells["S2:Z2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                    worksheet.Cells["Q2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C7BDF9"));
+                    worksheet.Cells["R2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#CCF9BD"));
+                    worksheet.Cells["A2:AQ2"].Style.WrapText = true;
+                    worksheet.Cells["A2:AQ2"].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AQ2"].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AQ2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AQ2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+
+                    int row = 3;
                     foreach (cipSchema item in data)
                     {
                         List<string[]> cellData = new List<string[]>()
@@ -277,21 +351,37 @@ namespace cip_api.controllers
                              item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
                              item.model
                         }
+
                     };
+                        worksheet.Cells["AC" + row].Formula = "=+IF(AF" + row + "=\"\",\"\",IF(X" + row + "=\"\",\"\",IF(AND(MID(X" + row + ",5,2)=\"09\",LEFT(AF" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(X" + row + ",5,2)=\"31\",MID(X" + row + ",5,2)=\"34\"),LEFT(AF" + row + ",2)=\"28\"),\"OK\",IF(MID(X" + row + ",5,2)=LEFT(AF" + row + ",2),\"OK\",\"NG\")))))";
+                        worksheet.Cells["AC" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                        worksheet.Cells["AE" + row].Formula = "=IF(LEFT(AF" + row + ",2)=\"28\",\"SOFTWARE\",IF(LEFT(AF" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AF" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AF" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AF" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AF" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AF" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AF" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
+                        worksheet.Cells["AE" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+
+                        // set pink row space
+                        worksheet.Cells["AA" + row + ":AB" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AD" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AF" + row + ":AP" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        // set pink row space
                         worksheet.Cells[row, 1].LoadFromArrays(cellData);
+                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
                         row = row + 1;
                     }
                     string fileName = System.Guid.NewGuid().ToString() + "-" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
                     excel.SaveAs(new FileInfo(serverPath + fileName));
 
                     stream.Position = 0;
+                    // return Ok(new { success = true });
                     return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", serverPath + fileName);
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
-                return Ok();
+                return Problem(e.StackTrace);
             }
         }
 
@@ -303,12 +393,24 @@ namespace cip_api.controllers
 
             db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == cipId).FirstOrDefault();
             db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == cipId).ToList<ApprovalSchema>();
-            
+
             return Ok(new
             {
                 success = true,
                 data = cip,
             });
+        }
+
+        [HttpGet("cipUpdate/{id}")]
+        public ActionResult cipUpdate(string id) {
+            try {
+
+                cipUpdateSchema data = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
+
+                return Ok(new { success = true, data, });
+            } catch (Exception e) {
+                return Problem(e.StackTrace);
+            }
         }
     }
 }

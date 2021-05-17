@@ -44,22 +44,12 @@ namespace cip_api.controllers
         {
             try
             {
-
-                if (body.username == "cipadmin")
+                userSchema userDB = db.USERS.Find(body.username);
+                if (userDB == null)
                 {
-                    users user = new users
-                    {
-                        band = "admin",
-                        dept = "ACC",
-                        deptCode = "acc",
-                        div = "admin",
-                        name = "CIP" + " " + "ADMIN",
-                        empNo = "admin",
-                        action = "approver"
-                    };
-                    string token = GenerateJSONWebToken(user);
-                    return Ok(new { success = true, message = "Logon success", token, data = user });
+                    return Unauthorized(new { success = false, message = "Please contact accounting to register for " + body.username });
                 }
+
                 using (HttpClient client = new HttpClient())
                 {
                     string body_req = "{\"username\": \"" + body.username + "\",\"password\": \"" + body.password + "\"}";
@@ -73,16 +63,10 @@ namespace cip_api.controllers
                     // response.EnsureSuccessStatusCode();
                     if (data.success == false)
                     {
-                        return BadRequest(new { success = false, message = "Username or password incorrect" });
+                        return BadRequest(new { success = false, message = data.message });
                     }
                     client.Dispose();
 
-                    userSchema userSystem = db.USERS.Find(body.username);
-
-                    if (userSystem == null)
-                    {
-                        return Unauthorized(new { success = false, message = "Please contact admin to register system." });
-                    }
                     users user = new users
                     {
                         band = data.data.band,
@@ -111,7 +95,7 @@ namespace cip_api.controllers
             var token = new JwtSecurityToken(_config["Jwt:Issuser"],
               _config["Jwt:Issuser"],
               null,
-              expires: DateTime.Now.AddMonths(8),
+              expires: DateTime.Now.AddHours(8),
               signingCredentials: credentials);
 
             token.Payload["user"] = userInfo;
@@ -228,7 +212,7 @@ namespace cip_api.controllers
 
                     userSchema checker_2 = new userSchema();
                     PermissionSchema permiss_2 = new PermissionSchema();
-                    
+
                     for (int col = 1; col <= 6; col += 1)
                     {
                         string value = "-";

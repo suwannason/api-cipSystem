@@ -55,21 +55,49 @@ namespace cip_api.controllers
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
             PermissionSchema approver = permissions.Find(e => e.action == "approver");
 
+            string message = "";
             List<cipSchema> data = new List<cipSchema>();
             if (checker != null)
             {
-                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
+                List<string> multidept = checker.deptCode.Split(',').ToList();
+
+                message = "CIP for data check.";
+                if (multidept.Count > 1)
+                {
+                    foreach (string code in multidept)
+                    {
+                        data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == code).ToList<cipSchema>());
+                    }
+                }
+                else
+                {
+                    data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
+                }
+
             }
             if (approver != null)
             {
-                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == approver.deptCode).ToList<cipSchema>());
+                List<string> multidept = checker.deptCode.Split(',').ToList();
+
+                message = "CIP for data check.";
+                if (multidept.Count > 1)
+                {
+                    foreach (string code in multidept)
+                    {
+                        data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == code).ToList<cipSchema>());
+                    }
+                }
+                else
+                {
+                    data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == checker.deptCode).ToList<cipSchema>());
+                }
             }
 
             return Ok(
               new
               {
                   success = true,
-                  message = "CIP on save.",
+                  message,
                   data,
               }
           );
@@ -157,24 +185,34 @@ namespace cip_api.controllers
 
             List<PermissionSchema> permissions = GetPermissions(username);
 
-            PermissionSchema checker = permissions.Find(e => e.action == "checker");
-            PermissionSchema approver = permissions.Find(e => e.action == "approver");
+            List<PermissionSchema> checker = permissions.FindAll(e => e.action == "checker");
+            List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
 
             string status = "";
-
+            // return Ok(new { approver, checker});
+            Console.WriteLine(approver.Count);
             foreach (string item in body.id)
             {
                 Int32 id = Int32.Parse(item);
                 ApprovalSchema approve = new ApprovalSchema();
                 cipSchema data = db.CIP.Find(id);
-                
-                if (data.cc == checker.deptCode)
+                db.CIP_UPDATE.Where<cipUpdateSchema>(row => row.cipSchemaid == id).FirstOrDefault();
+
+                if (checker.Count != 0)
                 {
-                    status = "cc-checked";
+                    PermissionSchema check = checker.Find(e => e.action == "checker" && e.deptCode == data.cipUpdate.costCenterOfUser);
+                    if (data.cipUpdate.costCenterOfUser == check.deptCode)
+                    {
+                        status = "cost-checked";
+                    }
                 }
-                else if (data.cc == approver.deptCode)
+                else if (approver.Count != 0)
                 {
-                    status = "cc-approved";
+                    PermissionSchema approve_act = approver.Find(e => e.action == "approver" && e.deptCode == data.cipUpdate.costCenterOfUser);
+                    if (data.cipUpdate.costCenterOfUser == approve_act.deptCode)
+                    {
+                        status = "cost-approved";
+                    }
                 }
 
                 data.status = status;

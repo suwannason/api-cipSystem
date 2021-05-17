@@ -75,6 +75,35 @@ namespace cip_api.controllers
         {
             try
             {
+                cipUpdateSchema cipUpdatedata = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == body.cipSchemaid[0]).FirstOrDefault();
+
+                if (cipUpdatedata != null)
+                {
+                    cipUpdatedata.actDate = body.actDate;
+                    cipUpdatedata.boiType = body.boiType;
+                    cipUpdatedata.classFixedAsset = body.classFixedAsset;
+                    cipUpdatedata.costCenterOfUser = body.costCenterOfUser;
+                    cipUpdatedata.createDate = DateTime.Now.ToString("yyyy/MM/dd");
+                    cipUpdatedata.fixAssetName = body.fixAssetName;
+                    cipUpdatedata.fixedAssetCode = body.fixedAssetCode;
+                    cipUpdatedata.model = body.model;
+                    cipUpdatedata.newBFMorAddBFM = body.newBFMorAddBFM;
+                    cipUpdatedata.planDate = body.planDate;
+                    cipUpdatedata.processDie = body.processDie;
+                    cipUpdatedata.reasonDiff = body.reasonDiff;
+                    cipUpdatedata.reasonForDelay = body.reasonForDelay;
+                    cipUpdatedata.remark = body.remark;
+                    cipUpdatedata.result = body.result;
+                    cipUpdatedata.serialNo = body.serialNo;
+                    cipUpdatedata.status = "save";
+                    cipUpdatedata.tranferToSupplier = body.tranferToSupplier;
+                    cipUpdatedata.upFixAsset = body.upFixAsset;
+
+                    db.CIP_UPDATE.Update(cipUpdatedata);
+                    db.SaveChanges();
+
+                    return Ok(new { success = true, message = "Update to User confirm CIP" });
+                }
                 List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
 
                 foreach (int item in body.cipSchemaid)
