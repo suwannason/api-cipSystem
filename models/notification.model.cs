@@ -20,5 +20,7 @@ namespace cip_api.models
 
         [Column(TypeName="nvarchar"), StringLength(15)]
         public string createDate { get; set; }  // yyyy/MM/dd
+        [Column(TypeName="nvarchar"), StringLength(15)]
+        public string type { get; set; }
     }
 }

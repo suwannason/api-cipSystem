@@ -16,11 +16,12 @@ using System.IdentityModel.Tokens.Jwt;
 using OfficeOpenXml;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace cip_api.controllers
 {
 
-    [Authorize]
+    // [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class userController : ControllerBase
@@ -139,7 +140,7 @@ namespace cip_api.controllers
         }
 
         [HttpPost("upload"), AllowAnonymous, Consumes("multipart/form-data")]
-        public ActionResult upload([FromForm] Upload body)
+        public async Task<ActionResult> upload([FromForm] Upload body)
         {
 
             string rootFolder = Directory.GetCurrentDirectory();
@@ -355,6 +356,40 @@ namespace cip_api.controllers
                 // db.USERS.Add(items[0]);
                 db.PERMISSIONS.AddRange(permission);
                 db.USERS.AddRange(items);
+                db.SaveChanges();
+
+                List<PermissionSchema> permissions = db.PERMISSIONS.ToList();
+
+                List<PermissionSchema> permissUpdate = new List<PermissionSchema>();
+                foreach (PermissionSchema item in permissions)
+                {
+                    if (item.empNo != "-")
+                    {
+                        using (HttpClient client = new HttpClient())
+                        {
+
+                            client.Timeout = TimeSpan.FromSeconds(20);
+                            HttpResponseMessage response = client.GetAsync(ldap_auth + "/authentication/profile?empNo=" + item.empNo).Result;
+
+                            ADprofileResponse data = JsonConvert.DeserializeObject<ADprofileResponse>(await response.Content.ReadAsStringAsync());
+                            // response.EnsureSuccessStatusCode();
+                            if (data.success == false)
+                            {
+                                Console.WriteLine(item.empNo);
+                                // return BadRequest(new { success = false, message = data.message });
+                            }
+                            else
+                            {
+                                PermissionSchema user = db.PERMISSIONS.Where<PermissionSchema>(row => row.empNo == item.empNo).FirstOrDefault();
+                                user.email = data.data.email;
+                                permissUpdate.Add(user);
+                            }
+
+                            client.Dispose();
+                        }
+                    }
+                }
+                db.PERMISSIONS.UpdateRange(permissUpdate);
                 db.SaveChanges();
 
                 return Ok();

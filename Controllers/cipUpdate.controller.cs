@@ -77,6 +77,8 @@ namespace cip_api.controllers
             {
                 cipUpdateSchema cipUpdatedata = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == body.cipSchemaid[0]).FirstOrDefault();
 
+                string username = User.FindFirst("username")?.Value;
+
                 if (cipUpdatedata != null)
                 {
                     cipUpdatedata.actDate = body.actDate;
@@ -95,7 +97,7 @@ namespace cip_api.controllers
                     cipUpdatedata.remark = body.remark;
                     cipUpdatedata.result = body.result;
                     cipUpdatedata.serialNo = body.serialNo;
-                    cipUpdatedata.status = "save";
+                    cipUpdatedata.status = "active";
                     cipUpdatedata.tranferToSupplier = body.tranferToSupplier;
                     cipUpdatedata.upFixAsset = body.upFixAsset;
 
@@ -104,37 +106,92 @@ namespace cip_api.controllers
 
                     return Ok(new { success = true, message = "Update to User confirm CIP" });
                 }
-                List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                List<cipUpdateSchema> cipUpdateIns = new List<cipUpdateSchema>();
 
+                List<ApprovalSchema> approver = new List<ApprovalSchema>();
                 foreach (int item in body.cipSchemaid)
                 {
-                    cipUpdateSchema data = new cipUpdateSchema
+                    cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item).FirstOrDefault();
+
+                    if (cipUpdate == null)
                     {
-                        actDate = body.actDate,
-                        boiType = body.boiType,
-                        cipSchemaid = item,
-                        classFixedAsset = body.classFixedAsset,
-                        costCenterOfUser = body.costCenterOfUser,
-                        fixAssetName = body.fixAssetName,
-                        fixedAssetCode = body.fixedAssetCode,
-                        model = body.model,
-                        newBFMorAddBFM = body.newBFMorAddBFM,
-                        planDate = body.planDate,
-                        processDie = body.processDie,
-                        reasonDiff = body.reasonDiff,
-                        reasonForDelay = body.reasonForDelay,
-                        remark = body.remark,
-                        result = body.result,
-                        serialNo = body.serialNo,
-                        tranferToSupplier = body.tranferToSupplier,
-                        upFixAsset = body.upFixAsset
-                    };
-                    cipUpdate.Add(data);
-                    cipSchema cip = db.CIP.Find(item);
-                    cip.status = "save";
-                    db.CIP.Update(cip);
+                        cipUpdateSchema data = new cipUpdateSchema
+                        {
+                            actDate = body.actDate,
+                            boiType = body.boiType,
+                            cipSchemaid = item,
+                            classFixedAsset = body.classFixedAsset,
+                            costCenterOfUser = body.costCenterOfUser,
+                            fixAssetName = body.fixAssetName,
+                            fixedAssetCode = body.fixedAssetCode,
+                            model = body.model,
+                            newBFMorAddBFM = body.newBFMorAddBFM,
+                            planDate = body.planDate,
+                            processDie = body.processDie,
+                            reasonDiff = body.reasonDiff,
+                            reasonForDelay = body.reasonForDelay,
+                            remark = body.remark,
+                            result = body.result,
+                            serialNo = body.serialNo,
+                            tranferToSupplier = body.tranferToSupplier,
+                            upFixAsset = body.upFixAsset
+                        };
+                        cipUpdateIns.Add(data);
+                        cipSchema cip = db.CIP.Find(item);
+                        cip.status = "save";
+                        db.CIP.Update(cip);
+
+                        ApprovalSchema approve = new ApprovalSchema();
+                        approve.onApproveStep = "save";
+                        approve.empNo = username;
+                        approve.cipSchemaid = item;
+                        approve.date = DateTime.Now.ToString("yyyy/MM/dd");
+
+                        approver.Add(approve);
+                    }
+                    else
+                    { // case update
+                        cipUpdate.actDate = body.actDate;
+                        cipUpdate.boiType = body.boiType;
+                        cipUpdate.classFixedAsset = body.classFixedAsset;
+                        cipUpdate.costCenterOfUser = body.costCenterOfUser;
+                        cipUpdate.fixAssetName = body.fixAssetName;
+                        cipUpdate.fixedAssetCode = body.fixedAssetCode;
+                        cipUpdate.model = body.model;
+                        cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
+                        cipUpdate.planDate = body.planDate;
+                        cipUpdate.processDie = body.processDie;
+                        cipUpdate.reasonDiff = body.reasonDiff;
+                        cipUpdate.reasonForDelay = body.reasonForDelay;
+                        cipUpdate.remark = body.remark;
+                        cipUpdate.result = body.result;
+                        cipUpdate.serialNo = body.serialNo;
+                        cipUpdate.tranferToSupplier = body.tranferToSupplier;
+                        cipUpdate.upFixAsset = body.upFixAsset;
+                        db.CIP_UPDATE.Update(cipUpdate);
+
+                        ApprovalSchema approve = new ApprovalSchema();
+                        cipSchema cip = db.CIP.Find(item);
+                        if (cip.cc != cipUpdate.costCenterOfUser)
+                        {
+                            approve.onApproveStep = "cost-prepared";
+                        }
+                        else
+                        {
+                            approve.onApproveStep = "save";
+                        }
+                        approve.empNo = username;
+                        approve.cipSchemaid = item;
+                        approve.date = DateTime.Now.ToString("yyyy/MM/dd");
+
+                        approver.Add(approve);
+                    }
                 }
-                db.CIP_UPDATE.AddRange(cipUpdate);
+                if (approver.Count > 0)
+                {
+                    db.APPROVAL.AddRange(approver);
+                }
+                db.CIP_UPDATE.AddRange(cipUpdateIns);
                 db.SaveChanges();
 
                 return Ok(new { success = true, message = "Create save success." });

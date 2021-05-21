@@ -30,7 +30,7 @@ namespace cip_api.models {
         [Column(TypeName="nvarchar"), StringLength(30)]
         public string classFixedAsset { get; set; }
 
-        [Column(TypeName="nvarchar"), StringLength(30)]
+        [Column(TypeName="nvarchar"), StringLength(120)]
         public string fixAssetName { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(40)]

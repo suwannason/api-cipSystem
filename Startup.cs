@@ -90,9 +90,11 @@ namespace cip_api
                                     string dept = data["user"]["dept"].ToString();
                                     string deptCode = data["user"]["deptCode"].ToString();
                                     string action = data["user"]["action"].ToString();
+                                    string name = data["user"]["name"].ToString();
 
                                     identity.AddClaim(new Claim("username", username));
                                     identity.AddClaim(new Claim("dept", dept));
+                                    identity.AddClaim(new Claim("name", name));
                                     identity.AddClaim(new Claim("deptCode", deptCode));
                                     identity.AddClaim(new Claim("action", action));
                                 }
@@ -117,8 +119,8 @@ namespace cip_api
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIP system v1")
-                    // c.SwaggerEndpoint("/api-acc-cip/swagger/v1/swagger.json", "CIP system v1")
+                    // c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIP system v1")
+                    c.SwaggerEndpoint("/api-acc-cip/swagger/v1/swagger.json", "CIP system v1")
                 );
             }
 

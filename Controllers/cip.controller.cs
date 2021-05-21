@@ -10,6 +10,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Drawing;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Text;
+using System.Net.Http.Headers;
 
 namespace cip_api.controllers
 {
@@ -22,12 +26,42 @@ namespace cip_api.controllers
         private readonly Database db;
         private IConfiguration _config;
         private readonly string ldap_auth;
+        private readonly string node_api;
 
         public cipController(Database _db, IConfiguration config, IEndpoint setting)
         {
             db = _db;
             _config = config;
             ldap_auth = setting.ldap_auth;
+            node_api = setting.node_api;
+        }
+
+        private async void sendMail(string from, string to, string subject, string text)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+
+                using (MultipartFormDataContent formData = new MultipartFormDataContent())
+                {
+                    var values = new[] {
+                        new KeyValuePair<string, string>("from", from),
+                        new KeyValuePair<string, string>("to", to),
+                        new KeyValuePair<string, string>("subject", subject),
+                        new KeyValuePair<string, string>("text", text),
+                    };
+                    foreach (var keyValuePair in values)
+                    {
+                        formData.Add(new StringContent(keyValuePair.Value),
+                        String.Format("\"{0}\"", keyValuePair.Key));
+                    }
+
+
+                    client.Timeout = TimeSpan.FromSeconds(20);
+                    HttpResponseMessage result = await client.PostAsync(node_api + "/middleware/email/sendmail", formData);
+                    string input = await result.Content.ReadAsStringAsync();
+                    client.Dispose();
+                }
+            }
         }
 
         [HttpPost("upload"), Consumes("multipart/form-data")]
@@ -41,6 +75,8 @@ namespace cip_api.controllers
             {
                 Directory.CreateDirectory(serverPath);
             }
+            string deptCode = User.FindFirst("deptCode").Value;
+            string username = User.FindFirst("username")?.Value;
             string fileName = System.Guid.NewGuid().ToString() + "-" + body.file.FileName;
             FileStream strem = System.IO.File.Create($"{serverPath}{fileName}");
             body.file.CopyTo(strem);
@@ -112,6 +148,37 @@ namespace cip_api.controllers
                 }
                 db.CIP.AddRange(excelData);
                 db.SaveChanges();
+                // SENDING MAIL
+                PermissionSchema acc_user = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == username).FirstOrDefault();
+                List<string> ccDept = excelData.Select(c => c.cc).Distinct().ToList();
+
+                string mailBody = "TO : All Concerned \n \n I would like to Confirm CIP-Domestic and Oversea. \n At link <WEB APP LINK> \n Please, input data pink area (data for user confirm). \n";
+                mailBody += "\n\n\n Thank You \n Best Regards \n";
+                mailBody += "**************************************************** \n";
+                mailBody += "\t\t\t " + " " + User.FindFirst("name")?.Value + " \n";
+                mailBody += "\t\t\t Accounting Dept. \n";
+                mailBody += "\t\t Canon Prachinburi (Thailand) Ltd. \n";
+                mailBody += "\t\t E-mail : " + acc_user.email + " \n";
+                mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
+                mailBody += "****************************************************";
+                foreach (string cc in ccDept)
+                {
+                    List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
+
+                    if (ccPrepare.Count != 0)
+                    {
+                        foreach (PermissionSchema userPrepare in ccPrepare)
+                        {
+                            sendMail(
+                                acc_user.email,
+                                userPrepare.email,
+                                "Confirm CIP-Domestic&Oversea" + DateTime.Now.ToString("yyyyMMdd") + " (Deadline within " + DateTime.Now.ToString("yyyy/MM/dd") + " time 16.00 pm.)",
+                               mailBody
+                            );
+                        }
+                    }
+                }
+                // SENDING MAIL
                 return Ok(new { success = true, message = "Upload data success." });
             }
 
@@ -131,10 +198,10 @@ namespace cip_api.controllers
                 {
                     cipUpdateSchema item = new cipUpdateSchema();
 
-
                     for (int col = 1; col <= colCount; col += 1)
                     {
                         string value = sheet.Cells[row, col].Value?.ToString();
+
                         if (value == null)
                         {
                             value = "-";
@@ -146,7 +213,7 @@ namespace cip_api.controllers
                                 {
                                     break;
                                 }
-                                cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && item.status == "open").FirstOrDefault();
+                                cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open" || item.status == "cc-approved")).FirstOrDefault();
                                 if (data != null)
                                 {
                                     item.cipSchemaid = data.id;
@@ -155,13 +222,39 @@ namespace cip_api.controllers
                                 }
                                 break;
 
-                            case 27: item.planDate = value; break;
-                            case 28: item.actDate = value; break;
+                            case 27:
+                                if (value != "-")
+                                {
+                                    item.planDate = value.Substring(0, value.IndexOf(" "));
+                                }
+                                else
+                                {
+                                    item.planDate = value;
+                                }
+                                break;
+                            case 28:
+                                if (value != "-")
+                                {
+                                    item.actDate = value.Substring(0, value.IndexOf(" "));
+                                }
+                                else
+                                {
+                                    item.actDate = value;
+                                }
+                                break;
                             case 29: item.result = value; break;
                             case 30: item.reasonDiff = value; break;
                             case 31: item.fixedAssetCode = value; break;
                             case 32: item.classFixedAsset = value; break;
-                            case 33: item.fixAssetName = value; break;
+                            case 33:
+                                if (value.IndexOf(',') != -1 || value.IndexOf(':') != -1
+                                    || value.IndexOf('"') != -1 || value.IndexOf('#') != -1
+                                    || value.IndexOf('!') != -1 || value.IndexOf('*') != -1 || value.Length > 100)
+                                {
+                                    return BadRequest(new { success = false, message = "Not allow Symbol value." });
+                                }
+                                item.fixAssetName = value;
+                                break;
                             case 34: item.serialNo = value; break;
                             case 35: item.processDie = value; break;
                             case 36: item.model = value; break;
@@ -183,17 +276,34 @@ namespace cip_api.controllers
                     }
                 }
             }
+
+            // return Ok(items);
             List<ApprovalSchema> prepare = new List<ApprovalSchema>();
 
             string preparer = User.FindFirst("username").Value;
             foreach (cipSchema item in updateStatus)
             {
+                string status = "save";
+                cipUpdateSchema cipupdateItem = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item.id).FirstOrDefault();
+
+                if (cipupdateItem == null)
+                {
+                    status = "save";
+                }
+                else
+                {
+                    if (item.cc != cipupdateItem.costCenterOfUser)
+                    {
+                        status = "cost-prepared";
+                    }
+                }
+                item.status = status;
                 prepare.Add(new ApprovalSchema
                 {
                     cipSchemaid = item.id,
                     date = dateNow,
                     empNo = preparer,
-                    onApproveStep = "save"
+                    onApproveStep = status,
                 });
             }
 
@@ -202,16 +312,16 @@ namespace cip_api.controllers
             db.CIP.UpdateRange(updateStatus);
             db.SaveChanges();
 
-            return Ok();
+            return Ok(items);
         }
 
         [HttpGet("list")]
         public ActionResult list()
         {
-            List<cipSchema> data = null;
+            List<cipSchema> data = new List<cipSchema>();
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
-                data = db.CIP.Where<cipSchema>(item => item.status == "open" || item.status == "reject")
+                data = db.CIP.Where<cipSchema>(item => item.status == "open")
                .Select(fields =>
                new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id, status = fields.status })
                .ToList<cipSchema>();
@@ -219,10 +329,34 @@ namespace cip_api.controllers
             }
             string deptCode = User.FindFirst("deptCode")?.Value;
 
-            data = db.CIP.Where<cipSchema>(item => item.status == "open" && item.cc == deptCode)
+            data = db.CIP.Where<cipSchema>(item => (item.status == "open" || item.status == "reject") && item.cc == deptCode)
                .Select(fields =>
-               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id })
+               new cipSchema
+               {
+                   cipNo = fields.cipNo,
+                   subCipNo = fields.subCipNo,
+                   vendor = fields.vendor,
+                   name = fields.name,
+                   qty = fields.qty,
+                   totalThb = fields.totalThb,
+                   cc = fields.cc,
+                   id = fields.id
+               })
                .ToList<cipSchema>();
+
+            List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == deptCode && item.status != "finish").ToList();
+
+            if (cipUpdate.Count > 0)
+            {
+                foreach (cipUpdateSchema item in cipUpdate)
+                {
+                    cipSchema fromUpdate = db.CIP.Where<cipSchema>(cip => cip.id == item.cipSchemaid && cip.status == "cc-approved").FirstOrDefault();
+                    if (fromUpdate != null)
+                    {
+                        data.Add(fromUpdate);
+                    }
+                }
+            }
             return Ok(new { success = true, data, });
         }
         [HttpGet("history")]
@@ -346,7 +480,7 @@ namespace cip_api.controllers
                         List<string[]> cellData = new List<string[]>()
                     {
                         new string [] {
-                            item.cipNo, item.subCipNo, item.vendorCode, item.vendor, item.acqDate, item.invDate, item.receivedDate,
+                            item.cipNo, item.subCipNo, item.poNo ,item.vendorCode, item.vendor, item.acqDate, item.invDate, item.receivedDate,
                              item.invNo, item.name, item.qty, item.exRate, item.cur, item.perUnit, item.totalJpy, item.totalThb, item.averageFreight,
                              item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
                              item.model
@@ -402,13 +536,83 @@ namespace cip_api.controllers
         }
 
         [HttpGet("cipUpdate/{id}")]
-        public ActionResult cipUpdate(string id) {
-            try {
+        public ActionResult cipUpdate(string id)
+        {
+            try
+            {
 
                 cipUpdateSchema data = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
 
                 return Ok(new { success = true, data, });
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
+                return Problem(e.StackTrace);
+            }
+        }
+
+        [HttpDelete("reject/{id}")]
+        public ActionResult rejectCip(string id)
+        {
+            try
+            {
+                cipSchema data = db.CIP.Find(Int32.Parse(id));
+
+                if (data != null)
+                {
+                    data.status = "open";
+                    db.CIP.Update(data);
+
+                    cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
+                    db.CIP_UPDATE.Remove(cipUpdate);
+
+                    List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == Int32.Parse(id)).ToList();
+                    db.APPROVAL.RemoveRange(approve);
+
+                    db.SaveChanges();
+                }
+
+                return Ok(new { success = true, message = "Reject CIP success." });
+            }
+            catch (Exception e)
+            {
+                return Problem(e.StackTrace);
+            }
+        }
+        [HttpPost("test")]
+        public async Task<ActionResult> test()
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+
+                    using (MultipartFormDataContent formData = new MultipartFormDataContent())
+                    {
+                        var values = new[] {
+                        new KeyValuePair<string, string>("from", "wanpen@mail.canon"),
+                        new KeyValuePair<string, string>("to", "suwannason@mail.canon"),
+                        new KeyValuePair<string, string>("subject", "system-imp@email.com"),
+                        new KeyValuePair<string, string>("text", "system-imp@email.com"),
+                    };
+                        foreach (var keyValuePair in values)
+                        {
+                            formData.Add(new StringContent(keyValuePair.Value),
+                            String.Format("\"{0}\"", keyValuePair.Key));
+                        }
+
+
+                        client.Timeout = TimeSpan.FromSeconds(20);
+                        HttpResponseMessage result = await client.PostAsync(node_api + "/middleware/email/sendmail", formData);
+                        string input = await result.Content.ReadAsStringAsync();
+                        client.Dispose();
+
+                        return Ok(input);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
                 return Problem(e.StackTrace);
             }
         }

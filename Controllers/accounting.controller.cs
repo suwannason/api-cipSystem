@@ -32,7 +32,9 @@ namespace cip_api.controllers
         [HttpGet("fa")]
         public ActionResult waitingFA()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "cc-approved" || item.status == "itc-confirmed" || item.status == "cost-approved" || item.status == "acc-approved").ToList();
+            string username = User.FindFirst("username")?.Value;
+
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "cc-approved" || item.status == "itc-confirmed" || item.status == "cost-approved").ToList();
             db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
 
             List<cipSchema> returnData = new List<cipSchema>();
@@ -116,7 +118,7 @@ namespace cip_api.controllers
         [HttpGet("tracking")]
         public ActionResult tracking()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish").ToList();
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish" && item.status != "open").ToList();
 
             return Ok(new { success = true, message = "CIP tracking", data, });
         }
@@ -160,6 +162,10 @@ namespace cip_api.controllers
                     {
                         status = "acc-checked";
                     }
+                }
+                else if (cip.status == "cost-approved" && (approver != null || checker != null))
+                {
+                    status = "acc-checked";
                 }
                 else
                 {
@@ -216,7 +222,7 @@ namespace cip_api.controllers
                     }
                     else if (item.status == "cost-approved")
                     {
-                        if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.result.ToLower() == "ng")
+                        if (item.cipUpdate.result.ToLower() == "ng")
                         {
                             returnData.Add(item);
                         }

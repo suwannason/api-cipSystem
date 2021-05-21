@@ -6,6 +6,17 @@ public class LdapResponse {
     public Profile data { get; set; }
 }
 
+public class ADprofileResponse {
+    public bool success { get; set; }
+    public string message { get; set; }
+    public ADprofile data { get; set; }
+}
+public class ADprofile {
+    public string email { get; set; }
+    public string name { get; set; }
+    public string department { get; set; }
+}
+
 public class Profile {
     public string empNo { get; set; }
     public string fnameEn { get; set; }
