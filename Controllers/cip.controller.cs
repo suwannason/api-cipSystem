@@ -12,8 +12,6 @@ using System;
 using System.Drawing;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Text;
-using System.Net.Http.Headers;
 
 namespace cip_api.controllers
 {
@@ -142,7 +140,11 @@ namespace cip_api.controllers
                         }
                         if (item.cipNo != "-")
                         {
-                            excelData.Add(item);
+                            cipSchema cipCreate = excelData.Find(e => e.cipNo == item.cipNo && e.subCipNo == item.subCipNo && e.cc == item.cc);
+                            if (cipCreate == null)
+                            {
+                                excelData.Add(item);
+                            }
                         }
                     }
                 }
@@ -161,23 +163,23 @@ namespace cip_api.controllers
                 mailBody += "\t\t E-mail : " + acc_user.email + " \n";
                 mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
                 mailBody += "****************************************************";
-                foreach (string cc in ccDept)
-                {
-                    List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
+                // foreach (string cc in ccDept)
+                // {
+                //     List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
 
-                    if (ccPrepare.Count != 0)
-                    {
-                        foreach (PermissionSchema userPrepare in ccPrepare)
-                        {
-                            sendMail(
-                                acc_user.email,
-                                userPrepare.email,
-                                "Confirm CIP-Domestic&Oversea" + DateTime.Now.ToString("yyyyMMdd") + " (Deadline within " + DateTime.Now.ToString("yyyy/MM/dd") + " time 16.00 pm.)",
-                               mailBody
-                            );
-                        }
-                    }
-                }
+                //     if (ccPrepare.Count != 0)
+                //     {
+                //         foreach (PermissionSchema userPrepare in ccPrepare)
+                //         {
+                //             sendMail(
+                //                 acc_user.email,
+                //                 userPrepare.email,
+                //                 "Confirm CIP-Domestic&Oversea" + DateTime.Now.ToString("yyyyMMdd") + " (Deadline within " + DateTime.Now.ToString("yyyy/MM/dd") + " time 16.00 pm.)",
+                //                mailBody
+                //             );
+                //         }
+                //     }
+                // }
                 // SENDING MAIL
                 return Ok(new { success = true, message = "Upload data success." });
             }
@@ -194,14 +196,14 @@ namespace cip_api.controllers
                 int colCount = sheet.Dimension.End.Column;
                 int rowCount = sheet.Dimension.End.Row;
 
-                for (int row = 3; row < rowCount; row += 1)
+                Console.WriteLine(colCount + " == " + rowCount);
+                for (int row = 3; row <= rowCount; row += 1)
                 {
                     cipUpdateSchema item = new cipUpdateSchema();
 
                     for (int col = 1; col <= colCount; col += 1)
                     {
                         string value = sheet.Cells[row, col].Value?.ToString();
-
                         if (value == null)
                         {
                             value = "-";
@@ -213,7 +215,7 @@ namespace cip_api.controllers
                                 {
                                     break;
                                 }
-                                cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open" || item.status == "cc-approved")).FirstOrDefault();
+                                cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open")).FirstOrDefault();
                                 if (data != null)
                                 {
                                     item.cipSchemaid = data.id;
@@ -223,7 +225,7 @@ namespace cip_api.controllers
                                 break;
 
                             case 27:
-                                if (value != "-")
+                                if (value != "-" && value.IndexOf(" ") != -1)
                                 {
                                     item.planDate = value.Substring(0, value.IndexOf(" "));
                                 }
@@ -233,7 +235,7 @@ namespace cip_api.controllers
                                 }
                                 break;
                             case 28:
-                                if (value != "-")
+                                if (value != "-" && value.IndexOf(" ") != -1)
                                 {
                                     item.actDate = value.Substring(0, value.IndexOf(" "));
                                 }
@@ -329,6 +331,7 @@ namespace cip_api.controllers
             }
             string deptCode = User.FindFirst("deptCode")?.Value;
 
+            Console.WriteLine(deptCode);
             data = db.CIP.Where<cipSchema>(item => (item.status == "open" || item.status == "reject") && item.cc == deptCode)
                .Select(fields =>
                new cipSchema
@@ -344,19 +347,19 @@ namespace cip_api.controllers
                })
                .ToList<cipSchema>();
 
-            List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == deptCode && item.status != "finish").ToList();
+            // List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == deptCode && item.status != "finish").ToList();
 
-            if (cipUpdate.Count > 0)
-            {
-                foreach (cipUpdateSchema item in cipUpdate)
-                {
-                    cipSchema fromUpdate = db.CIP.Where<cipSchema>(cip => cip.id == item.cipSchemaid && cip.status == "cc-approved").FirstOrDefault();
-                    if (fromUpdate != null)
-                    {
-                        data.Add(fromUpdate);
-                    }
-                }
-            }
+            // if (cipUpdate.Count > 0)
+            // {
+            //     foreach (cipUpdateSchema item in cipUpdate)
+            //     {
+            //         cipSchema fromUpdate = db.CIP.Where<cipSchema>(cip => cip.id == item.cipSchemaid && cip.status == "cc-approved").FirstOrDefault();
+            //         if (fromUpdate != null)
+            //         {
+            //             data.Add(fromUpdate);
+            //         }
+            //     }
+            // }
             return Ok(new { success = true, data, });
         }
         [HttpGet("history")]
@@ -381,12 +384,12 @@ namespace cip_api.controllers
                     if (dept.ToLower() != "acc" && dept != "admin")
                     {
                         data = db.CIP.Where<cipSchema>(item => item.cc == deptCode && item.status == "open").ToList<cipSchema>();
+                               db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
                     }
                     else
                     {
-                        Console.WriteLine("ELSE");
                         data = db.CIP.Where<cipSchema>(item => item.status == "open").ToList<cipSchema>();
-                        Console.WriteLine("Case else: " + data.Count);
+                               db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
                     }
                 }
                 else
