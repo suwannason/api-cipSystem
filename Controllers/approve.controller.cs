@@ -29,7 +29,17 @@ namespace cip_api.controllers
 
         private List<PermissionSchema> GetPermissions(string empNo)
         {
-            return db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == empNo).ToList<PermissionSchema>();
+            try
+            {
+                Console.WriteLine("Get premission: " + empNo);
+                return db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == empNo).ToList<PermissionSchema>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("GetPermissions " + e.Message);
+                return null;
+            }
+
         }
         private void createNotification(string currentAction, string username, string deptCode)
         {
@@ -89,53 +99,59 @@ namespace cip_api.controllers
         [HttpGet("cc")]
         public ActionResult cc()
         {
-            string username = User.FindFirst("username")?.Value;
-            string deptCode = User.FindFirst("deptCode")?.Value;
-            List<PermissionSchema> permissions = GetPermissions(username);
-
-            Console.WriteLine(username);
-
-            PermissionSchema checker = permissions.Find(e => e.action == "checker");
-            List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
-
-            string message = "";
-            List<cipSchema> data = new List<cipSchema>();
-            if (checker != null)
+            try
             {
-                List<string> multidept = checker.deptCode.Split(',').ToList();
+                string username = User.FindFirst("username")?.Value;
+                string deptCode = User.FindFirst("deptCode")?.Value;
+                List<PermissionSchema> permissions = GetPermissions(username);
 
-                message = "CIP for data check.";
-                if (multidept.Count > 1)
+                PermissionSchema checker = permissions.Find(e => e.action == "checker");
+                List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
+
+                string message = "";
+                List<cipSchema> data = new List<cipSchema>();
+                if (checker != null)
                 {
-                    foreach (string code in multidept)
+                    List<string> multidept = checker.deptCode.Split(',').ToList();
+
+                    message = "CIP for data check.";
+                    if (multidept.Count > 1)
                     {
-                        data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && deptCode.IndexOf(code) != -1).ToList<cipSchema>());
+                        foreach (string code in multidept)
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && deptCode.IndexOf(code) != -1).ToList<cipSchema>());
+                        }
+                    }
+                    else
+                    {
+                        data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
+                    }
+
+                }
+                if (approver.Count != 0)
+                {
+                    message = "CIP for data approve.";
+
+                    foreach (PermissionSchema permission in approver)
+                    {
+                        data.AddRange((db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode).ToList<cipSchema>()));
                     }
                 }
-                else
-                {
-                    data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
-                }
 
+                return Ok(
+                  new
+                  {
+                      success = true,
+                      message,
+                      data,
+                  }
+              );
             }
-            if (approver.Count != 0)
+            catch (Exception e)
             {
-                message = "CIP for data approve.";
-
-                foreach (PermissionSchema permission in approver)
-                {
-                    data.AddRange((db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode).ToList<cipSchema>()));
-                }
+                Console.Write(e.Message);
+                return Problem(e.StackTrace);
             }
-
-            return Ok(
-              new
-              {
-                  success = true,
-                  message,
-                  data,
-              }
-          );
         }
 
         [HttpGet("costCenter")]
@@ -170,7 +186,7 @@ namespace cip_api.controllers
                 foreach (cipSchema item in onApproved)
                 {
                     cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.costCenterOfUser.IndexOf(prepare.deptCode) != -1).FirstOrDefault();
-                    if (cipUpdate != null)
+                    if (item.cipUpdate != null)
                     {
                         data.Add(item);
                     }
@@ -205,13 +221,13 @@ namespace cip_api.controllers
 
                 if (checker != null)
                 {
-                    if (data.cc == checker.deptCode)
+                    if ((data.cc == checker.deptCode) && data.status != "cc-checked")
                     {
                         data.status = "cc-checked";
                         status = "cc-checked";
                     }
                 }
-                else if (approver.Count != 0)
+                if (approver.Count != 0)
                 {
                     PermissionSchema approving = approver.Find(e => e.deptCode == data.cc);
                     if (approving != null)
@@ -229,7 +245,11 @@ namespace cip_api.controllers
                 approve.date = DateTime.Now.ToString("yyyy/MM/dd");
 
                 updateRange.Add(data);
-                approvals.Add(approve);
+                if (status != "")
+                {
+                    approvals.Add(approve);
+                }
+
             }
 
             db.CIP.UpdateRange(updateRange);
@@ -366,7 +386,8 @@ namespace cip_api.controllers
             try
             {
                 string deptCode = User.FindFirst("deptCode")?.Value;
-                List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf(item.costCenterOfUser) != -1).ToList();
+                Console.WriteLine(deptCode);
+                List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf(item.costCenterOfUser) != -1 && item.status == "cc-approved").ToList();
 
                 MemoryStream stream = new MemoryStream();
 
@@ -381,7 +402,7 @@ namespace cip_api.controllers
                     "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
                     "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model",
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
-                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "Process Die", "Model",
+                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "PARTS\nNUMBER\nDie NO", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay",
                     "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
                     }
@@ -446,6 +467,7 @@ namespace cip_api.controllers
                     worksheet.Cells["A2:AQ2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
 
                     int row = 3;
+                    Console.WriteLine(cipUpdate.Count);
                     foreach (cipUpdateSchema cipUpdateitem in cipUpdate)
                     {
                         cipSchema item = db.CIP.Find(cipUpdateitem.cipSchemaid);
@@ -456,7 +478,7 @@ namespace cip_api.controllers
                              item.invNo, item.name, item.qty, item.exRate, item.cur, item.perUnit, item.totalJpy, item.totalThb, item.averageFreight,
                              item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
                              item.model, cipUpdateitem.planDate, cipUpdateitem.actDate, cipUpdateitem.result, cipUpdateitem.reasonDiff, cipUpdateitem.fixedAssetCode,
-                             cipUpdateitem.classFixedAsset, cipUpdateitem.fixAssetName, cipUpdateitem.serialNo, cipUpdateitem.processDie, cipUpdateitem.model,
+                             cipUpdateitem.classFixedAsset, cipUpdateitem.fixAssetName, cipUpdateitem.serialNo, cipUpdateitem.partNumberDieNo, cipUpdateitem.processDie, cipUpdateitem.model,
                              cipUpdateitem.costCenterOfUser, cipUpdateitem.tranferToSupplier, cipUpdateitem.upFixAsset, cipUpdateitem.newBFMorAddBFM, cipUpdateitem.reasonForDelay,
                              cipUpdateitem.remark, cipUpdateitem.boiType
                         }
@@ -483,7 +505,7 @@ namespace cip_api.controllers
                     excel.SaveAs(new FileInfo(serverPath + fileName));
 
                     stream.Position = 0;
-                    // return Ok(new { success = true });
+                    // return Ok(new { success = true, dept = deptCode, cipUpdate, });
                     return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", serverPath + fileName);
                 }
 
@@ -582,15 +604,16 @@ namespace cip_api.controllers
                                     item.cipUpdate.fixAssetName = value;
                                     break;
                                 case 34: item.cipUpdate.serialNo = value; break;
-                                case 35: item.cipUpdate.processDie = value; break;
-                                case 36: item.cipUpdate.model = value; break;
-                                case 37: item.cipUpdate.costCenterOfUser = value; break;
-                                case 38: item.cipUpdate.tranferToSupplier = value; break;
-                                case 39: item.cipUpdate.upFixAsset = value; break;
-                                case 40: item.cipUpdate.newBFMorAddBFM = value; break;
-                                case 41: item.cipUpdate.reasonForDelay = value; break;
-                                case 42: item.cipUpdate.remark = value; break;
-                                case 43: item.cipUpdate.boiType = value; break;
+                                case 35: item.cipUpdate.partNumberDieNo = value; break;
+                                case 36: item.cipUpdate.processDie = value; break;
+                                case 37: item.cipUpdate.model = value; break;
+                                case 38: item.cipUpdate.costCenterOfUser = value; break;
+                                case 39: item.cipUpdate.tranferToSupplier = value; break;
+                                case 40: item.cipUpdate.upFixAsset = value; break;
+                                case 41: item.cipUpdate.newBFMorAddBFM = value; break;
+                                case 42: item.cipUpdate.reasonForDelay = value; break;
+                                case 43: item.cipUpdate.remark = value; break;
+                                case 44: item.cipUpdate.boiType = value; break;
                             }
                         }
                         if (item.cipNo != "-")
@@ -621,6 +644,7 @@ namespace cip_api.controllers
                     cipUpdateTable.classFixedAsset = item.cipUpdate.classFixedAsset;
                     cipUpdateTable.fixAssetName = item.cipUpdate.fixAssetName;
                     cipUpdateTable.serialNo = item.cipUpdate.serialNo;
+                    cipUpdateTable.partNumberDieNo = item.cipUpdate.partNumberDieNo;
                     cipUpdateTable.processDie = item.cipUpdate.processDie;
                     cipUpdateTable.model = item.cipUpdate.model;
                     cipUpdateTable.costCenterOfUser = item.cipUpdate.costCenterOfUser;

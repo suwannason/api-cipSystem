@@ -15,6 +15,7 @@ namespace cip_api.request
         public string fixedAssetCode { get; set; }
         public string classFixedAsset { get; set; }
         public string fixAssetName { get; set; }
+        public string partNumberDieNo { get; set; }
         public string serialNo { get; set; }
         public string processDie { get; set; }
         public string model { get; set; }

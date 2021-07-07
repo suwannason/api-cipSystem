@@ -151,18 +151,18 @@ namespace cip_api.controllers
                 db.CIP.AddRange(excelData);
                 db.SaveChanges();
                 // SENDING MAIL
-                PermissionSchema acc_user = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == username).FirstOrDefault();
-                List<string> ccDept = excelData.Select(c => c.cc).Distinct().ToList();
+                // PermissionSchema acc_user = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == username).FirstOrDefault();
+                // List<string> ccDept = excelData.Select(c => c.cc).Distinct().ToList();
 
-                string mailBody = "TO : All Concerned \n \n I would like to Confirm CIP-Domestic and Oversea. \n At link <WEB APP LINK> \n Please, input data pink area (data for user confirm). \n";
-                mailBody += "\n\n\n Thank You \n Best Regards \n";
-                mailBody += "**************************************************** \n";
-                mailBody += "\t\t\t " + " " + User.FindFirst("name")?.Value + " \n";
-                mailBody += "\t\t\t Accounting Dept. \n";
-                mailBody += "\t\t Canon Prachinburi (Thailand) Ltd. \n";
-                mailBody += "\t\t E-mail : " + acc_user.email + " \n";
-                mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
-                mailBody += "****************************************************";
+                // string mailBody = "TO : All Concerned \n \n I would like to Confirm CIP-Domestic and Oversea. \n At link <WEB APP LINK> \n Please, input data pink area (data for user confirm). \n";
+                // mailBody += "\n\n\n Thank You \n Best Regards \n";
+                // mailBody += "**************************************************** \n";
+                // mailBody += "\t\t\t " + " " + User.FindFirst("name")?.Value + " \n";
+                // mailBody += "\t\t\t Accounting Dept. \n";
+                // mailBody += "\t\t Canon Prachinburi (Thailand) Ltd. \n";
+                // mailBody += "\t\t E-mail : " + acc_user.email + " \n";
+                // mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
+                // mailBody += "****************************************************";
                 // foreach (string cc in ccDept)
                 // {
                 //     List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
@@ -258,15 +258,16 @@ namespace cip_api.controllers
                                 item.fixAssetName = value;
                                 break;
                             case 34: item.serialNo = value; break;
-                            case 35: item.processDie = value; break;
-                            case 36: item.model = value; break;
-                            case 37: item.costCenterOfUser = value; break;
-                            case 38: item.tranferToSupplier = value; break;
-                            case 39: item.upFixAsset = value; break;
-                            case 40: item.newBFMorAddBFM = value; break;
-                            case 41: item.reasonForDelay = value; break;
-                            case 42: item.remark = value; break;
-                            case 43: item.boiType = value; break;
+                            case 35: item.partNumberDieNo = value; break;
+                            case 36: item.processDie = value; break;
+                            case 37: item.model = value; break;
+                            case 38: item.costCenterOfUser = value; break;
+                            case 39: item.tranferToSupplier = value; break;
+                            case 40: item.upFixAsset = value; break;
+                            case 41: item.newBFMorAddBFM = value; break;
+                            case 42: item.reasonForDelay = value; break;
+                            case 43: item.remark = value; break;
+                            case 44: item.boiType = value; break;
                         }
                         item.status = "active";
                         item.createDate = dateNow;
@@ -413,7 +414,7 @@ namespace cip_api.controllers
                     "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
                     "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model",
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
-                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "Process Die", "Model",
+                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay",
                     "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
                     }
@@ -446,7 +447,7 @@ namespace cip_api.controllers
                     worksheet.Cells["AA1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
 
                     worksheet.Cells["AA2:AP2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F1ECB9"));
-                    worksheet.Cells["AQ2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#57A868"));
+                    worksheet.Cells["AR2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#57A868"));
 
                     worksheet.Column(1).Width = 5;
                     worksheet.Column(2).Width = 4;
@@ -471,11 +472,11 @@ namespace cip_api.controllers
                     worksheet.Cells["S2:Z2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
                     worksheet.Cells["Q2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C7BDF9"));
                     worksheet.Cells["R2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#CCF9BD"));
-                    worksheet.Cells["A2:AQ2"].Style.WrapText = true;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AR2"].Style.WrapText = true;
+                    worksheet.Cells["A2:AR2"].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AR2"].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AR2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AR2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
 
                     int row = 3;
                     foreach (cipSchema item in data)
@@ -501,10 +502,10 @@ namespace cip_api.controllers
                         worksheet.Cells["AF" + row + ":AP" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
                         // set pink row space
                         worksheet.Cells[row, 1].LoadFromArrays(cellData);
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AR" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AR" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AR" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AR" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
                         row = row + 1;
                     }
                     string fileName = System.Guid.NewGuid().ToString() + "-" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";

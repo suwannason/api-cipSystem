@@ -34,6 +34,9 @@ namespace cip_api.models {
         public string fixAssetName { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(40)]
+        public string partNumberDieNo { get; set; }
+
+        [Column(TypeName="nvarchar"), StringLength(40)]
         public string serialNo { get; set; }
 
         [Column(TypeName="nvarchar"), StringLength(25)]

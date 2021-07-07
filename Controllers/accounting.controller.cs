@@ -118,7 +118,7 @@ namespace cip_api.controllers
         [HttpGet("tracking")]
         public ActionResult tracking()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish" && item.status != "open").ToList();
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish").ToList();
 
             return Ok(new { success = true, message = "CIP tracking", data, });
         }
@@ -243,37 +243,66 @@ namespace cip_api.controllers
             {
                 List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "cc-approved" || item.status == "cost-approved" || item.status == "itc-confirmed" || item.status == "acc-approved").ToList();
                 db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
-                List<cipSchema> returnData = new List<cipSchema>();
+
+                List<cipSchema> updateItems = new List<cipSchema>();
+                List<ApprovalSchema> approveItems = new List<ApprovalSchema>();
+                List<cipUpdateSchema> cipUpdateItems = new List<cipUpdateSchema>();
+
                 foreach (cipSchema item in data)
                 {
+
+                    ApprovalSchema approver = new ApprovalSchema();
+                    // cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.cipSchemaid == item.id).FirstOrDefault();
+
+                    approver.cipSchemaid = item.id;
+                    approver.date = DateTime.Now.ToString("yyyy/MM/dd");
+                    approver.empNo = User.FindFirst("username")?.Value;
+
                     if (item.status == "cc-approved")
                     {
                         if (item.cc == item.cipUpdate.costCenterOfUser && item.cipUpdate.tranferToSupplier == "-" && item.cipUpdate.result.ToLower() != "ng")
                         {
-                            returnData.Add(item);
+                            updateItems.Add(item);
                         }
                     }
                     else if (item.status == "cost-approved")
                     {
                         if (item.cipUpdate.tranferToSupplier == "-" && item.cc != "5110" && item.cipUpdate.result.ToLower() != "ng")
                         {
-                            returnData.Add(item);
+                            updateItems.Add(item);
                         }
                     }
                     else if (item.status == "itc-confirmed")
                     {
                         if (item.cipUpdate.result.ToLower() != "ng")
                         {
-                            returnData.Add(item);
+
+                            approver.onApproveStep = "acc-approved";
+                            item.status = "finished";
+                            updateItems.Add(item);
+                            item.cipUpdate.status = "finished";
                         }
                     }
                     else if (item.status == "acc-approved")
                     {
-                        returnData.Add(item);
+                        approver.onApproveStep = "acc-approved";
+                        item.status = "finished";
+                        item.cipUpdate.status = "finished";
+
+                        updateItems.Add(item);
+
                     }
+                    approveItems.Add(approver);
+                    cipUpdateItems.Add(item.cipUpdate);
                 }
 
-                return Ok(new { success = true, message = "Accouting data check.", data = returnData });
+                db.CIP.UpdateRange(updateItems);
+                db.CIP_UPDATE.UpdateRange(cipUpdateItems);
+                db.APPROVAL.AddRange(approveItems);
+
+                db.SaveChanges();
+
+                return Ok(new { success = true, message = "Accouting data check.", data = updateItems });
             }
             catch (Exception e)
             {
@@ -295,8 +324,8 @@ namespace cip_api.controllers
                     cipSchema cip = db.CIP.Find(id);
                     cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(row => row.cipSchemaid == id).FirstOrDefault();
 
-                    cipUpdate.status = "finish";
-                    cipUpdate.status = "finish";
+                    cipUpdate.status = "finished";
+                    cip.status = "finished";
 
                     refCip.Add(cipUpdate);
                     cipUpdateItem.Add(cip);

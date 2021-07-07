@@ -19,7 +19,7 @@ namespace cip_api.models
         public string deptCode { get; set; }
         [Column(TypeName = "nvarchar"), StringLength(20)]
         public string deptShortName { get; set; }
-        [Column(TypeName = "nvarchar"), StringLength(30)]
-        public string email { get; set; }
+        // [Column(TypeName = "nvarchar"), StringLength(60)]
+        // public string email { get; set; }
     }
 }

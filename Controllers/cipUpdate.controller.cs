@@ -88,6 +88,7 @@ namespace cip_api.controllers
                     cipUpdatedata.createDate = DateTime.Now.ToString("yyyy/MM/dd");
                     cipUpdatedata.fixAssetName = body.fixAssetName;
                     cipUpdatedata.fixedAssetCode = body.fixedAssetCode;
+                    cipUpdatedata.partNumberDieNo = body.partNumberDieNo;
                     cipUpdatedata.model = body.model;
                     cipUpdatedata.newBFMorAddBFM = body.newBFMorAddBFM;
                     cipUpdatedata.planDate = body.planDate;
@@ -130,6 +131,7 @@ namespace cip_api.controllers
                             processDie = body.processDie,
                             reasonDiff = body.reasonDiff,
                             reasonForDelay = body.reasonForDelay,
+                            partNumberDieNo = body.partNumberDieNo,
                             remark = body.remark,
                             result = body.result,
                             serialNo = body.serialNo,
@@ -161,6 +163,7 @@ namespace cip_api.controllers
                         cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
                         cipUpdate.planDate = body.planDate;
                         cipUpdate.processDie = body.processDie;
+                        cipUpdate.partNumberDieNo = body.partNumberDieNo;
                         cipUpdate.reasonDiff = body.reasonDiff;
                         cipUpdate.reasonForDelay = body.reasonForDelay;
                         cipUpdate.remark = body.remark;

@@ -38,47 +38,44 @@ namespace cip_api.controllers
         {
             try
             {
+                string deptCode = User.FindFirst("deptCode")?.Value;
                 string username = User.FindFirst("username")?.Value;
                 List<PermissionSchema> permissions = GetPermissions(username);
+                Int32 requester = 0;
+                Int32 user = 0;
 
-                PermissionSchema checker = permissions.Find(e => e.action == "checker");
-                List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
+                PermissionSchema prepare = permissions.Find(item => item.empNo == username && item.action == "prepare");
+                PermissionSchema checker = permissions.Find(item => item.empNo == username && item.action == "checker");
+                PermissionSchema approver = permissions.Find(item => item.empNo == username && item.action == "approver");
 
-                Int32 approving = 0;
-                Int32 checking = 0;
-
+                if (prepare != null)
+                {
+                    requester += db.CIP.Count<cipSchema>(item => item.cc == deptCode && item.status == "open");
+                }
                 if (checker != null)
                 {
-                    List<string> multidept = checker.deptCode.Split(',').ToList();
-                    if (multidept.Count > 1)
-                    {
-                        foreach (string code in multidept)
-                        {
-                            checking += db.CIP.Count<cipSchema>(item => item.status == "save" && item.cc == code);
-                        }
-                    }
-                    else
-                    {
-                        checking += db.CIP.Count<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode);
-                    }
+                    requester += db.CIP.Count<cipSchema>(item => item.status == "cc-prepared");
+                    List<cipSchema> cip = db.CIP.Where<cipSchema>(item => item.cc == deptCode && item.status == "cost-prepared").ToList();
+                                          db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
+
+                                          return Ok(cip);
+
 
                 }
-                if (approver.Count != 0)
+                if (approver != null)
                 {
 
-                    foreach (PermissionSchema permission in approver)
-                    {
-                        approving += db.CIP.Count<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode);
-                    }
                 }
+
                 return Ok(new
                 {
                     success = true,
                     message = "Notification number.",
-                    data = new {
-                        check = checking,
-                        approve = approving,
-                        sum = checking + approving
+                    data = new
+                    {
+                        requester,
+                        user,
+                        sum = requester + user
                     }
                 });
             }
@@ -86,17 +83,6 @@ namespace cip_api.controllers
             {
                 return Problem(e.StackTrace);
             }
-            // return Ok(new
-            // {
-            //     success = true,
-            //     data = new
-            //     {
-            //         requester = 0,
-            //         userController = 0,
-            //         total = 0,
-            //     }
-            // }
-            // );
         }
 
     }

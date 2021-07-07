@@ -119,8 +119,8 @@ namespace cip_api
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
-                    // c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIP system v1")
-                    c.SwaggerEndpoint("/api-acc-cip/swagger/v1/swagger.json", "CIP system v1")
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIP system v1")
+                    // c.SwaggerEndpoint("/api-acc-cip/swagger/v1/swagger.json", "CIP system v1")
                 );
             }
 

@@ -104,17 +104,28 @@ namespace cip_api.controllers
         }
 
 
-        [HttpPost("login/test"), AllowAnonymous]
+        [HttpPost("login/backdoor"), AllowAnonymous]
         public ActionResult login_test(Login body)
         {
 
             userSchema data = db.USERS.Find(body.username);
+            List<PermissionSchema> permissions = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == body.username).ToList();
+            string deptcode = "";
+
+            for (int i = 0; i < permissions.Count; i += 1) {
+                deptcode += permissions[i].deptCode;
+
+                if (i < permissions.Count - 1) {
+                    deptcode += ",";
+                }
+            }
+            Console.WriteLine(deptcode);
             users user = new users
             {
-                band = "a",
+                band = null,
                 dept = data.deptShortName,
-                deptCode = data.deptCode,
-                div = "div",
+                deptCode = deptcode,
+                div = null,
                 name = data.name,
                 empNo = data.empNo,
             };
@@ -381,7 +392,7 @@ namespace cip_api.controllers
                             else
                             {
                                 PermissionSchema user = db.PERMISSIONS.Where<PermissionSchema>(row => row.empNo == item.empNo).FirstOrDefault();
-                                user.email = data.data.email;
+                                // user.email = data.data.email;
                                 permissUpdate.Add(user);
                             }
 
