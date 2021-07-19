@@ -114,13 +114,132 @@ namespace cip_api.controllers
                 return Problem(e.StackTrace);
             }
         }
-
         [HttpGet("tracking")]
         public ActionResult tracking()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish").ToList();
+            try
+            {
+                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish").ToList();
+                db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
 
-            return Ok(new { success = true, message = "CIP tracking", data, });
+                List<dynamic> returnData = new List<dynamic>();
+
+                string message = "";
+                foreach (cipSchema item in data)
+                {
+                    if (item.status == "save")
+                    {
+                        message = "Waiting for user check";
+
+                    }
+                    else if (item.status == "cc-checked")
+                    {
+                        message = "Waiting for user approve";
+                    }
+
+                    else if (item.status == "cost-checked")
+                    {
+                        message = "Waiting for Cost center approve";
+                    }
+                    else if (item.status == "itc-confirmed")
+                    {
+                        if (item.cipUpdate.result == "NG")
+                        {
+                            message = "Waiting for ACC confirm diff";
+                        }
+                        else
+                        {
+                            message = "Waiting for confirm FA";
+                        }
+                    }
+                    else if (item.status == "cc-approved")
+                    {
+                        if (item.cc != item.cipUpdate.costCenterOfUser)
+                        {
+                            message = "Waiting for Cost center check";
+                        }
+                        else if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
+                        {
+                            message = "Waiting for ITC confirm";
+                        }
+                        else if (item.cipUpdate.result == "NG")
+                        {
+                            message = "Waiting for ACC confirm diff";
+                        }
+                        else
+                        {
+                            message = "Waiting for confirm FA";
+                        }
+
+                    }
+                    else if (item.status == "cost-approved")
+                    {
+                        if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
+                        {
+                            message = "Waiting for ITC confirm";
+                        }
+                        else if (item.cipUpdate.result == "NG")
+                        {
+                            message = "Waiting for ACC confirm diff";
+                        }
+                        else
+                        {
+                            message = "Waiting for confirm FA";
+                        }
+                    }
+                    else if (item.status == "acc-checked")
+                    {
+                        message = "Waiting for ACC approve diff";
+                    }
+                    else if (item.status == "acc-approved")
+                    {
+                        message = "Waiting for confirm FA";
+                    }
+                    returnData.Add(
+                        new
+                        {
+                            message = message,
+                            id = item.id,
+                            workType = item.workType,
+                            projectNo = item.projectNo,
+                            cipNo = item.cipNo,
+                            subCipNo = item.subCipNo,
+                            poNo = item.poNo,
+                            vendorCode = item.vendorCode,
+                            vendor = item.vendor,
+                            acqDate = item.acqDate,
+                            invDate = item.invDate,
+                            receivedDate = item.receivedDate,
+                            invNo = item.invNo,
+                            name = item.name,
+                            qty = item.qty,
+                            exRate = item.exRate,
+                            cur = item.cur,
+                            perUnit = item.perUnit,
+                            totalJpy = item.totalJpy,
+                            totalThb = item.totalThb,
+                            averageFreight = item.averageFreight,
+                            averageInsurance = item.averageInsurance,
+                            totalJpy_1 = item.totalJpy_1,
+                            totalThb_1 = item.totalThb_1,
+                            perUnitThb = item.perUnitThb,
+                            totalOfCip = item.totalOfCip,
+                            budgetCode = item.budgetCode,
+                            prDieJig = item.prDieJig,
+                            model = item.model,
+                            partNoDieNo = item.partNoDieNo,
+                            createDate = item.createDate,
+                        }
+                    );
+                }
+
+                return Ok(new { success = true, message = "CIP tracking", data = returnData, });
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return Problem(e.Message);
+            }
         }
         [HttpPut("approve/diff")]
         public ActionResult approveDiff(Approve body)
@@ -199,6 +318,11 @@ namespace cip_api.controllers
 
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
             PermissionSchema approver = permissions.Find(e => e.action == "approver");
+            PermissionSchema preapare = permissions.Find(e => e.action == "prepare");
+            if (preapare != null)
+            {
+                return Conflict(new { success = true, message = "Permission denied." });
+            }
 
             if (checker != null)
             {
@@ -244,65 +368,39 @@ namespace cip_api.controllers
                 List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "cc-approved" || item.status == "cost-approved" || item.status == "itc-confirmed" || item.status == "acc-approved").ToList();
                 db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
 
-                List<cipSchema> updateItems = new List<cipSchema>();
-                List<ApprovalSchema> approveItems = new List<ApprovalSchema>();
-                List<cipUpdateSchema> cipUpdateItems = new List<cipUpdateSchema>();
+                List<cipSchema> returnData = new List<cipSchema>();
 
                 foreach (cipSchema item in data)
                 {
-
-                    ApprovalSchema approver = new ApprovalSchema();
-                    // cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.cipSchemaid == item.id).FirstOrDefault();
-
-                    approver.cipSchemaid = item.id;
-                    approver.date = DateTime.Now.ToString("yyyy/MM/dd");
-                    approver.empNo = User.FindFirst("username")?.Value;
 
                     if (item.status == "cc-approved")
                     {
                         if (item.cc == item.cipUpdate.costCenterOfUser && item.cipUpdate.tranferToSupplier == "-" && item.cipUpdate.result.ToLower() != "ng")
                         {
-                            updateItems.Add(item);
+                            returnData.Add(item);
                         }
                     }
                     else if (item.status == "cost-approved")
                     {
-                        if (item.cipUpdate.tranferToSupplier == "-" && item.cc != "5110" && item.cipUpdate.result.ToLower() != "ng")
+                        if (item.cipUpdate.tranferToSupplier == "-" && item.cc != "5110" && item.cipUpdate.result != "NG")
                         {
-                            updateItems.Add(item);
+                            returnData.Add(item);
                         }
                     }
                     else if (item.status == "itc-confirmed")
                     {
                         if (item.cipUpdate.result.ToLower() != "ng")
                         {
-
-                            approver.onApproveStep = "acc-approved";
-                            item.status = "finished";
-                            updateItems.Add(item);
-                            item.cipUpdate.status = "finished";
+                            returnData.Add(item);
                         }
                     }
                     else if (item.status == "acc-approved")
                     {
-                        approver.onApproveStep = "acc-approved";
-                        item.status = "finished";
-                        item.cipUpdate.status = "finished";
-
-                        updateItems.Add(item);
-
+                        returnData.Add(item);
                     }
-                    approveItems.Add(approver);
-                    cipUpdateItems.Add(item.cipUpdate);
                 }
 
-                db.CIP.UpdateRange(updateItems);
-                db.CIP_UPDATE.UpdateRange(cipUpdateItems);
-                db.APPROVAL.AddRange(approveItems);
-
-                db.SaveChanges();
-
-                return Ok(new { success = true, message = "Accouting data check.", data = updateItems });
+                return Ok(new { success = true, message = "Accouting data check.", data = returnData, });
             }
             catch (Exception e)
             {

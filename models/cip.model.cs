@@ -13,6 +13,12 @@ namespace cip_api.models
         [Key, Column(TypeName = "int"), StringLength(6)]
         public int id { get; set; }
 
+        [Column(TypeName = "nvarchar"), StringLength(25)]
+        public string workType { get; set; }
+
+        [Column(TypeName = "nvarchar"), StringLength(25)]
+        public string projectNo { get; set; }
+
         [Column(TypeName = "nvarchar"), StringLength(10)]
         public string cipNo { get; set; }
 
@@ -67,7 +73,7 @@ namespace cip_api.models
         [Column(TypeName = "nvarchar"), StringLength(10)]
         public string averageInsurance { get; set; }
 
-        [Column(TypeName = "nvarchar"), StringLength(15)]
+        [Column(TypeName = "nvarchar"), StringLength(30)]
         public string totalJpy_1 { get; set; }
 
         [Column(TypeName = "nvarchar"), StringLength(30)]
@@ -90,6 +96,9 @@ namespace cip_api.models
 
         [Column(TypeName = "nvarchar"), StringLength(10), DefaultValue("-")]
         public string model { get; set; }
+
+        [Column(TypeName = "nvarchar"), StringLength(25), DefaultValue("-")]
+        public string partNoDieNo { get; set; }
 
         [Column(TypeName = "nvarchar"), StringLength(10), DefaultValue("-")]
         public string createDate { get; set; }

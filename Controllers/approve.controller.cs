@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using System.Drawing;
 using OfficeOpenXml;
+using OfficeOpenXml.DataValidation.Contracts;
 
 namespace cip_api.controllers
 {
@@ -387,7 +388,7 @@ namespace cip_api.controllers
             {
                 string deptCode = User.FindFirst("deptCode")?.Value;
                 Console.WriteLine(deptCode);
-                List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf(item.costCenterOfUser) != -1 && item.status == "cc-approved").ToList();
+                List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf(item.costCenterOfUser) != -1).ToList();
 
                 MemoryStream stream = new MemoryStream();
 
@@ -397,13 +398,13 @@ namespace cip_api.controllers
 
                     List<string[]> header = new List<string[]>()
                 {
-                    new string[] { "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
+                    new string[] { "Type work", "Project No.", "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
                     "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (THB/JPY/USD)",
                     "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
-                    "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model",
+                    "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model", "PART No./DIE No.",
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
-                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "PARTS\nNUMBER\nDie NO", "Process Die", "Model",
-                    "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay",
+                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
+                    "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",
                     "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
                     }
                 };
@@ -420,35 +421,41 @@ namespace cip_api.controllers
                     {
                         Directory.CreateDirectory(serverPath);
                     }
-                    worksheet.Cells["A1:Z1"].Merge = true;
+                    worksheet.Cells["A1:AC1"].Merge = true;
                     worksheet.Cells["A1"].Value = "Data for Accounting Dept.";
                     worksheet.Cells["A1"].Style.Font.Bold = true;
                     worksheet.Cells["A1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#9FE5E6"));
                     worksheet.Cells["A1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
                     worksheet.Cells["A1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
 
-                    worksheet.Cells["AA1:AQ1"].Merge = true;
-                    worksheet.Cells["AA1"].Value = "Data for User confirm";
-                    worksheet.Cells["AA1"].Style.Font.Bold = true;
-                    worksheet.Cells["AA1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
-                    worksheet.Cells["AA1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-                    worksheet.Cells["AA1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+                    worksheet.Cells["AD1:AV1"].Merge = true;
+                    worksheet.Cells["AD1"].Value = "Data for User confirm";
+                    worksheet.Cells["AD1"].Style.Font.Bold = true;
+                    worksheet.Cells["AD1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                    worksheet.Cells["AD1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["AD1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
 
-                    worksheet.Cells["AA2:AP2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F1ECB9"));
-                    worksheet.Cells["AQ2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#57A868"));
+                    worksheet.Cells["AD2:AU2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F1ECB9"));
+                    worksheet.Cells["AV2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#57A868"));
 
-                    worksheet.Column(1).Width = 5;
-                    worksheet.Column(2).Width = 4;
+                    worksheet.Column(1).Width = 13;
+                    worksheet.Column(2).Width = 11;
                     worksheet.Column(6).Width = 11;
+                    worksheet.Column(8).Width = 11;
                     worksheet.Column(10).Width = 11;
-                    worksheet.Column(11).Width = 4; // Qty.
+                    worksheet.Column(11).Width = 11; // INV no.
+                    worksheet.Column(12).Width = 13;
                     worksheet.Column(14).Width = 13;
                     worksheet.Column(15).Width = 12;
+                    worksheet.Column(16).Width = 12;
                     worksheet.Column(17).Width = 12;
                     worksheet.Column(18).Width = 12;
                     worksheet.Column(19).Width = 12;
+                    worksheet.Column(20).Width = 12;
+                    worksheet.Column(21).Width = 12;
                     worksheet.Column(23).Width = 12;
                     worksheet.Column(25).Width = 12; // AA
+                    worksheet.Column(27).Width = 12; // AA
                     worksheet.Column(41).Width = 12; // AO
                     worksheet.Column(43).Width = 15; // AO
                     worksheet.Row(2).Height = 80;
@@ -456,15 +463,15 @@ namespace cip_api.controllers
                     worksheet.Row(2).Style.Font.Bold = true;
                     worksheet.Row(2).Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
                     worksheet.Row(2).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
-                    worksheet.Cells["A2:P2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
-                    worksheet.Cells["S2:Z2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
-                    worksheet.Cells["Q2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C7BDF9"));
-                    worksheet.Cells["R2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#CCF9BD"));
-                    worksheet.Cells["A2:AQ2"].Style.WrapText = true;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                    worksheet.Cells["A2:AQ2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:R2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                    worksheet.Cells["U2:AC2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                    worksheet.Cells["S2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C7BDF9"));
+                    worksheet.Cells["T2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#CCF9BD"));
+                    worksheet.Cells["A2:AV2"].Style.WrapText = true;
+                    worksheet.Cells["A2:AV2"].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AV2"].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AV2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AV2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
 
                     int row = 3;
                     Console.WriteLine(cipUpdate.Count);
@@ -474,31 +481,45 @@ namespace cip_api.controllers
                         List<string[]> cellData = new List<string[]>()
                     {
                         new string [] {
+                            item.workType, item.projectNo,
                             item.cipNo, item.subCipNo, item.poNo ,item.vendorCode, item.vendor, item.acqDate, item.invDate, item.receivedDate,
                              item.invNo, item.name, item.qty, item.exRate, item.cur, item.perUnit, item.totalJpy, item.totalThb, item.averageFreight,
                              item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
-                             item.model, cipUpdateitem.planDate, cipUpdateitem.actDate, cipUpdateitem.result, cipUpdateitem.reasonDiff, cipUpdateitem.fixedAssetCode,
-                             cipUpdateitem.classFixedAsset, cipUpdateitem.fixAssetName, cipUpdateitem.serialNo, cipUpdateitem.partNumberDieNo, cipUpdateitem.processDie, cipUpdateitem.model,
-                             cipUpdateitem.costCenterOfUser, cipUpdateitem.tranferToSupplier, cipUpdateitem.upFixAsset, cipUpdateitem.newBFMorAddBFM, cipUpdateitem.reasonForDelay,
-                             cipUpdateitem.remark, cipUpdateitem.boiType
+                             item.model, item.partNoDieNo,
+                             item.cipUpdate.planDate, item.cipUpdate.actDate, item.cipUpdate.result, item.cipUpdate.reasonDiff, item.cipUpdate.fixedAssetCode,
+                             item.cipUpdate.classFixedAsset, item.cipUpdate.fixAssetName, item.cipUpdate.serialNo,
+                             item.cipUpdate.partNumberDieNo, item.cipUpdate.processDie, item.cipUpdate.model, item.cipUpdate.costCenterOfUser,
+                             item.cipUpdate.tranferToSupplier, item.cipUpdate.upFixAsset, item.cipUpdate.newBFMorAddBFM, item.cipUpdate.reasonForDelay, item.cipUpdate.addCipBfmNo,
+                             item.cipUpdate.remark, item.cipUpdate.boiType
                         }
 
                     };
-                        worksheet.Cells["AC" + row].Formula = "=+IF(AF" + row + "=\"\",\"\",IF(X" + row + "=\"\",\"\",IF(AND(MID(X" + row + ",5,2)=\"09\",LEFT(AF" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(X" + row + ",5,2)=\"31\",MID(X" + row + ",5,2)=\"34\"),LEFT(AF" + row + ",2)=\"28\"),\"OK\",IF(MID(X" + row + ",5,2)=LEFT(AF" + row + ",2),\"OK\",\"NG\")))))";
-                        worksheet.Cells["AC" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
-                        worksheet.Cells["AE" + row].Formula = "=IF(LEFT(AF" + row + ",2)=\"28\",\"SOFTWARE\",IF(LEFT(AF" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AF" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AF" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AF" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AF" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AF" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AF" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
-                        worksheet.Cells["AE" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                        IExcelDataValidationList typeWork = worksheet.DataValidations.AddListValidation("A" + row);
+                        typeWork.Formula.Values.Add("Domestic");
+                        typeWork.Formula.Values.Add("Domestic-DIE");
+                        typeWork.Formula.Values.Add("Oversea");
+                        typeWork.Formula.Values.Add("Project ENG3");
+                        typeWork.Formula.Values.Add("Project-MSC");
+
+                        IExcelDataValidationList newOrAddBFM = worksheet.DataValidations.AddListValidation("AR" + row);
+                        newOrAddBFM.Formula.Values.Add("Add BFM");
+                        newOrAddBFM.Formula.Values.Add("NEW BFM");
+
+                        worksheet.Cells["AF" + row].Formula = "=+IF(AH" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AH" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AH" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AH" + row + ",2),\"OK\",\"NG\")))))";
+                        worksheet.Cells["AF" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                        worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI" + row + ",2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
+                        worksheet.Cells["AH" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
 
                         // set pink row space
-                        worksheet.Cells["AA" + row + ":AB" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
-                        worksheet.Cells["AD" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
-                        worksheet.Cells["AF" + row + ":AP" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AD" + row + ":AE" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AG" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AI" + row + ":AV" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
                         // set pink row space
                         worksheet.Cells[row, 1].LoadFromArrays(cellData);
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AQ" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
                         row = row + 1;
                     }
                     string fileName = System.Guid.NewGuid().ToString() + "-" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
@@ -568,9 +589,9 @@ namespace cip_api.controllers
                             }
                             switch (col)
                             {
-                                case 1: item.cipNo = value; break;
-                                case 2: item.subCipNo = value; break;
-                                case 27:
+                                case 3: item.cipNo = value; break;
+                                case 4: item.subCipNo = value; break;
+                                case 30:
                                     if (value != "-" && value.IndexOf(" ") != -1)
                                     {
                                         item.cipUpdate.planDate = value.Substring(0, value.IndexOf(" "));
@@ -580,7 +601,7 @@ namespace cip_api.controllers
                                         item.cipUpdate.planDate = value;
                                     }
                                     break;
-                                case 28:
+                                case 31:
                                     if (value != "-" && value.IndexOf(" ") != -1)
                                     {
                                         item.cipUpdate.actDate = value.Substring(0, value.IndexOf(" "));
@@ -590,11 +611,11 @@ namespace cip_api.controllers
                                         item.cipUpdate.actDate = value;
                                     }
                                     break;
-                                case 29: item.cipUpdate.result = value; break;
-                                case 30: item.cipUpdate.reasonDiff = value; break;
-                                case 31: item.cipUpdate.fixedAssetCode = value; break;
-                                case 32: item.cipUpdate.classFixedAsset = value; break;
-                                case 33:
+                                case 32: item.cipUpdate.result = value; break;
+                                case 33: item.cipUpdate.reasonDiff = value; break;
+                                case 34: item.cipUpdate.fixedAssetCode = value; break;
+                                case 35: item.cipUpdate.classFixedAsset = value; break;
+                                case 36:
                                     if (value.IndexOf(',') != -1 || value.IndexOf(':') != -1
                                         || value.IndexOf('"') != -1 || value.IndexOf('#') != -1
                                         || value.IndexOf('!') != -1 || value.IndexOf('*') != -1 || value.Length > 100)
@@ -603,17 +624,18 @@ namespace cip_api.controllers
                                     }
                                     item.cipUpdate.fixAssetName = value;
                                     break;
-                                case 34: item.cipUpdate.serialNo = value; break;
-                                case 35: item.cipUpdate.partNumberDieNo = value; break;
-                                case 36: item.cipUpdate.processDie = value; break;
-                                case 37: item.cipUpdate.model = value; break;
-                                case 38: item.cipUpdate.costCenterOfUser = value; break;
-                                case 39: item.cipUpdate.tranferToSupplier = value; break;
-                                case 40: item.cipUpdate.upFixAsset = value; break;
-                                case 41: item.cipUpdate.newBFMorAddBFM = value; break;
-                                case 42: item.cipUpdate.reasonForDelay = value; break;
-                                case 43: item.cipUpdate.remark = value; break;
-                                case 44: item.cipUpdate.boiType = value; break;
+                                case 37: item.cipUpdate.serialNo = value; break;
+                                case 38: item.cipUpdate.partNumberDieNo = value; break;
+                                case 39: item.cipUpdate.processDie = value; break;
+                                case 40: item.cipUpdate.model = value; break;
+                                case 41: item.cipUpdate.costCenterOfUser = value; break;
+                                case 42: item.cipUpdate.tranferToSupplier = value; break;
+                                case 43: item.cipUpdate.upFixAsset = value; break;
+                                case 44: item.cipUpdate.newBFMorAddBFM = value; break;
+                                case 45: item.cipUpdate.reasonForDelay = value; break;
+                                case 46: item.cipUpdate.addCipBfmNo = value; break;
+                                case 47: item.cipUpdate.remark = value; break;
+                                case 48: item.cipUpdate.boiType = value; break;
                             }
                         }
                         if (item.cipNo != "-")
@@ -652,6 +674,7 @@ namespace cip_api.controllers
                     cipUpdateTable.upFixAsset = item.cipUpdate.upFixAsset;
                     cipUpdateTable.newBFMorAddBFM = item.cipUpdate.newBFMorAddBFM;
                     cipUpdateTable.reasonForDelay = item.cipUpdate.reasonForDelay;
+                    cipUpdateTable.addCipBfmNo = item.cipUpdate.addCipBfmNo;
                     cipUpdateTable.remark = item.cipUpdate.remark;
                     cipUpdateTable.boiType = item.cipUpdate.boiType;
 
