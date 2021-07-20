@@ -1,4 +1,5 @@
 
+
 public class LdapResponse {
 
     public bool success { get; set; }

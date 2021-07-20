@@ -32,7 +32,7 @@ namespace cip_api.controllers
         }
 
         [HttpGet("waiting")]
-        public ActionResult waiting()
+        public ActionResult waiting(string user, string dcode)
         {
             List<cipSchema> data = db.CIP.Where<cipSchema>(item => (item.status == "cc-approved" || item.status == "cost-approved") && item.cc == "5110").ToList<cipSchema>();
             // db.CIP_UPDATE.ToList();
@@ -58,6 +58,10 @@ namespace cip_api.controllers
                     }
                 }
             }
+            if (user != null)
+            {
+                return Ok(returnData.Count);
+            }
             return Ok(new
             {
                 success = true,
@@ -67,15 +71,21 @@ namespace cip_api.controllers
         }
 
         [HttpGet("confirmed")]
-        public ActionResult confirmed()
+        public ActionResult confirmed(string user, string dcode)
         {
             List<ApprovalSchema> data = db.APPROVAL.Where<ApprovalSchema>(item => item.onApproveStep == "itc-confirmed").ToList();
             List<cipSchema> returData = new List<cipSchema>();
 
-            foreach (ApprovalSchema item in data) {
+            foreach (ApprovalSchema item in data)
+            {
                 returData.Add(db.CIP.Find(item.cipSchemaid));
             }
-            return Ok(new { success = true, messsage = "ITC confirmed", data=returData, });
+
+            if (user != null)
+            {
+                return Ok(returData.Count);
+            }
+            return Ok(new { success = true, messsage = "ITC confirmed", data = returData, });
         }
         [HttpPut("confirm")]
         public ActionResult confirmData(Approve body)

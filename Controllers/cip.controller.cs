@@ -89,7 +89,6 @@ namespace cip_api.controllers
             string dateNow = DateTime.Now.ToString("yyyy/MM/dd");
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
-                Console.WriteLine("ACC ");
                 using (ExcelPackage excel = new ExcelPackage(Existfile))
                 {
                     ExcelWorkbook workbook = excel.Workbook;

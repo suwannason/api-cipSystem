@@ -31,4 +31,9 @@ namespace cip_api.request.user
 
         public Microsoft.AspNetCore.Http.IFormFile file { get; set;}
     }
+
+    public class ProfileUser {
+        public string username { get; set; }
+        public string deptCode { get; set; }
+    }
 }

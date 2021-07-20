@@ -32,7 +32,6 @@ namespace cip_api.controllers
         {
             try
             {
-                Console.WriteLine("Get premission: " + empNo);
                 return db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == empNo).ToList<PermissionSchema>();
             }
             catch (Exception e)
@@ -98,12 +97,22 @@ namespace cip_api.controllers
             );
         }
         [HttpGet("cc")]
-        public ActionResult cc()
+        public ActionResult cc(string user, string dcode)
         {
             try
             {
-                string username = User.FindFirst("username")?.Value;
-                string deptCode = User.FindFirst("deptCode")?.Value;
+                string username = ""; string deptCode = "";
+                if (User == null)
+                {
+                    username = user;
+                    deptCode = dcode;
+                }
+                else
+                {
+                    username = User.FindFirst("username")?.Value;
+                    deptCode = User.FindFirst("deptCode")?.Value;
+                }
+
                 List<PermissionSchema> permissions = GetPermissions(username);
 
                 PermissionSchema checker = permissions.Find(e => e.action == "checker");
@@ -138,7 +147,10 @@ namespace cip_api.controllers
                         data.AddRange((db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode).ToList<cipSchema>()));
                     }
                 }
-
+                if (user != null)
+                {
+                    return Ok(data.Count);
+                }
                 return Ok(
                   new
                   {
@@ -156,11 +168,22 @@ namespace cip_api.controllers
         }
 
         [HttpGet("costCenter")]
-        public ActionResult costCenter()
+        public ActionResult costCenter(string user, string code)
         {
-            string deptCode = User.FindFirst("deptCode")?.Value;
+            // try
+            // {
+            string username = ""; string deptCode = "";
+            if (User == null)
+            {
+                username = user;
+                deptCode = code;
+            }
+            else
+            {
+                username = User.FindFirst("username")?.Value;
+                deptCode = User.FindFirst("deptCode")?.Value;
+            }
 
-            string username = User.FindFirst("username")?.Value;
             List<PermissionSchema> permissions = GetPermissions(username);
 
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
@@ -194,7 +217,17 @@ namespace cip_api.controllers
                 }
             }
 
+            if (user != null)
+            {
+                return Ok(data.Count);
+            }
             return Ok(new { success = true, message, data, });
+            // }
+            // catch (System.Exception e)
+            // {
+            //     Console.WriteLine(e.Message);
+            //     return Problem(e.Message);
+            // }
         }
 
         [HttpPut("approve/cc")]

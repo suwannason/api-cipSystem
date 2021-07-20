@@ -45,6 +45,7 @@ namespace cip_api
             services.AddSingleton<IEndpoint>(sp => sp.GetRequiredService<IOptions<Endpoint>>().Value);
             // ENDPOINT API
 
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
                 options.RequireHttpsMetadata = false;

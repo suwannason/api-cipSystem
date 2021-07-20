@@ -1,10 +1,10 @@
 
 
 using cip_api.models;
+using cip_api.request.user;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,49 +38,49 @@ namespace cip_api.controllers
         {
             try
             {
-                string deptCode = User.FindFirst("deptCode")?.Value;
-                string username = User.FindFirst("username")?.Value;
-                List<PermissionSchema> permissions = GetPermissions(username);
-                Int32 requester = 0;
-                Int32 user = 0;
+                accController acc = new accController(db, _config, _setting);
 
-                PermissionSchema prepare = permissions.Find(item => item.empNo == username && item.action == "prepare");
-                PermissionSchema checker = permissions.Find(item => item.empNo == username && item.action == "checker");
-                PermissionSchema approver = permissions.Find(item => item.empNo == username && item.action == "approver");
+                approvalController approval = new approvalController(db, _config, _setting);
 
-                if (prepare != null)
-                {
-                    requester += db.CIP.Count<cipSchema>(item => item.cc == deptCode && item.status == "open");
-                }
-                if (checker != null)
-                {
-                    requester += db.CIP.Count<cipSchema>(item => item.status == "cc-prepared");
-                    List<cipSchema> cip = db.CIP.Where<cipSchema>(item => item.cc == deptCode && item.status == "cost-prepared").ToList();
-                                          db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
+                itcController itc = new itcController(db, _config, _setting);
 
-                                          return Ok(cip);
+                ProfileUser user = new ProfileUser {
+                    deptCode = User.FindFirst("deptCode")?.Value,
+                    username = User.FindFirst("username")?.Value,
+                };
 
+                OkObjectResult cc_requester = approval.cc(user.username, user.deptCode) as OkObjectResult;
+                OkObjectResult cc_user = approval.costCenter(user.username, user.deptCode) as OkObjectResult;
+                OkObjectResult waiting_fa = acc.accFinishData(user.username, user.deptCode) as OkObjectResult;
+                OkObjectResult acc_diff = acc.codeDiff(user.username, user.deptCode) as OkObjectResult;
+                OkObjectResult itc_confirm = itc.waiting(user.username, user.deptCode) as OkObjectResult;
+                OkObjectResult itc_confirmed = itc.confirmed(user.username, user.deptCode) as OkObjectResult;
 
-                }
-                if (approver != null)
-                {
-
-                }
+                string ccRequester = cc_requester == null ? "0" : cc_requester.Value.ToString();
+                string ccUser = cc_user == null ? "0" : cc_user.Value.ToString();
+                string waitingFA = waiting_fa == null ? "0" : waiting_fa.Value.ToString();
+                string codeDiff = acc_diff == null ? "0" : acc_diff.Value.ToString();
+                string itcConfirm = itc_confirm == null ? "0" : itc_confirm.Value.ToString();
+                string itcConfirmed = itc_confirmed == null ? "0" : itc_confirmed.Value.ToString();
 
                 return Ok(new
                 {
                     success = true,
-                    message = "Notification number.",
+                    message = "Number notification",
                     data = new
                     {
-                        requester,
-                        user,
-                        sum = requester + user
+                        ccRequester,
+                        ccUser,
+                        waitingFA,
+                        codeDiff,
+                        itcConfirm,
+                        itcConfirmed
                     }
                 });
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return Problem(e.StackTrace);
             }
         }

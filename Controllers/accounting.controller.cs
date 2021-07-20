@@ -305,14 +305,24 @@ namespace cip_api.controllers
         }
 
         [HttpGet("diff")]
-        public ActionResult codeDiff()
+        public ActionResult codeDiff(string user, string dcode)
         {
+
+            string username = ""; string deptCode = "";
+            if (User == null)
+            {
+                username = user;
+                deptCode = dcode;
+            }
+            else
+            {
+                username = User.FindFirst("username")?.Value;
+                deptCode = User.FindFirst("deptCode")?.Value;
+            }
 
             List<cipSchema> cipSuccess = db.CIP.Where<cipSchema>(item => item.status == "cost-approved" || item.status == "cc-approved" || item.status == "itc-confirmed").ToList();
             db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
             List<cipSchema> returnData = new List<cipSchema>();
-
-            string username = User.FindFirst("username")?.Value;
 
             List<PermissionSchema> permissions = GetPermissions(username);
 
@@ -357,11 +367,15 @@ namespace cip_api.controllers
             {
                 returnData.AddRange(db.CIP.Where<cipSchema>(item => item.status == "acc-checked").ToList());
             }
+            if (user != null)
+            {
+                return Ok(returnData.Count);
+            }
             return Ok(new { success = true, message = "Account diff data check.", data = returnData });
         }
 
         [HttpGet("finish")]
-        public ActionResult accFinishData()
+        public ActionResult accFinishData(string user, string code)
         {
             try
             {
@@ -399,8 +413,13 @@ namespace cip_api.controllers
                         returnData.Add(item);
                     }
                 }
+                if (user != null)
+                {
+                    return Ok(returnData.Count);
+                }
+                return Ok(new { success = true, message = "Accouting data check.", data = returnData, count = returnData.Count });
 
-                return Ok(new { success = true, message = "Accouting data check.", data = returnData, });
+
             }
             catch (Exception e)
             {

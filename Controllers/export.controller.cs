@@ -53,7 +53,7 @@ namespace cip_api.controllers
         {
             try
             {
-                string accFile = @"\\cptfile01\Dept\2310\G. Fixed Assets\Support ICD - CIP system";
+                // string accFile = @"\\cptfile01\Dept\2310\G. Fixed Assets\Support ICD - CIP system";
 
                 MemoryStream stream = new MemoryStream();
 
