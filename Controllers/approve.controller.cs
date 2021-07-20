@@ -129,12 +129,28 @@ namespace cip_api.controllers
                     {
                         foreach (string code in multidept)
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && deptCode.IndexOf(code) != -1).ToList<cipSchema>());
+                            if (code == "55XX")
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            }
+                            else
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && deptCode.IndexOf(code) != -1).ToList<cipSchema>());
+                            }
+
                         }
                     }
                     else
                     {
-                        data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
+                        if (checker.deptCode == "55XX")
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                        }
+                        else
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
+                        }
+
                     }
 
                 }
@@ -144,7 +160,15 @@ namespace cip_api.controllers
 
                     foreach (PermissionSchema permission in approver)
                     {
-                        data.AddRange((db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode).ToList<cipSchema>()));
+                        if (permission.deptCode == "55XX")
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                        }
+                        else
+                        {
+                            data.AddRange((db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode).ToList<cipSchema>()));
+                        }
+
                     }
                 }
                 if (user != null)
@@ -170,8 +194,6 @@ namespace cip_api.controllers
         [HttpGet("costCenter")]
         public ActionResult costCenter(string user, string code)
         {
-            // try
-            // {
             string username = ""; string deptCode = "";
             if (User == null)
             {
@@ -195,12 +217,30 @@ namespace cip_api.controllers
             if (checker != null)
             {
                 message = "CIP on Cost center check";
-                data = db.CIP.Where<cipSchema>(item => item.status == "cost-prepared" && item.cipUpdate.costCenterOfUser != item.cc).ToList();
+
+                if (deptCode == "55XX")
+                {
+                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-prepared" && item.cipUpdate.costCenterOfUser != item.cc && item.cipUpdate.costCenterOfUser.IndexOf("55") != -1).ToList();
+                    //    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
+                }
+                else
+                {
+                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-prepared" && item.cipUpdate.costCenterOfUser != item.cc && item.cipUpdate.costCenterOfUser == deptCode).ToList();
+                }
+
             }
             if (approver != null)
             {
                 message = "CIP on Cost center approve";
-                data = db.CIP.Where<cipSchema>(item => item.status == "cost-checked" && item.cipUpdate.costCenterOfUser != item.cc).ToList();
+                if (deptCode == "55XX")
+                {
+                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-checked" && item.cipUpdate.costCenterOfUser != item.cc && item.cipUpdate.costCenterOfUser.IndexOf("55") != -1).ToList();
+                }
+                else
+                {
+                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-checked" && item.cipUpdate.costCenterOfUser != item.cc).ToList();
+                }
+
             }
             if (prepare != null)
             {
@@ -209,10 +249,21 @@ namespace cip_api.controllers
                 message = "CIP on Cost center prepare";
                 foreach (cipSchema item in onApproved)
                 {
-                    cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.costCenterOfUser.IndexOf(prepare.deptCode) != -1).FirstOrDefault();
-                    if (item.cipUpdate != null)
+                    if (deptCode != "55XX")
                     {
-                        data.Add(item);
+                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.costCenterOfUser.IndexOf(prepare.deptCode) != -1).FirstOrDefault();
+                        if (item.cipUpdate != null)
+                        {
+                            data.Add(item);
+                        }
+                    }
+                    else
+                    {
+                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.costCenterOfUser.IndexOf("55") != -1).FirstOrDefault();
+                        if (item.cipUpdate != null)
+                        {
+                            data.Add(item);
+                        }
                     }
                 }
             }
@@ -222,12 +273,6 @@ namespace cip_api.controllers
                 return Ok(data.Count);
             }
             return Ok(new { success = true, message, data, });
-            // }
-            // catch (System.Exception e)
-            // {
-            //     Console.WriteLine(e.Message);
-            //     return Problem(e.Message);
-            // }
         }
 
         [HttpPut("approve/cc")]
@@ -260,13 +305,29 @@ namespace cip_api.controllers
                         data.status = "cc-checked";
                         status = "cc-checked";
                     }
-                }
-                if (approver.Count != 0)
-                {
-                    PermissionSchema approving = approver.Find(e => e.deptCode == data.cc);
-                    if (approving != null)
+                    else if (checker.deptCode == "55XX" && data.status != "cc-checked" && data.cc.IndexOf("55") != -1)
                     {
-                        if (data.cc == approving.deptCode)
+                        data.status = "cc-checked";
+                        status = "cc-checked";
+                    }
+                }
+                else if (approver.Count != 0)
+                {
+                    if (deptCode != "55XX")
+                    {
+                        PermissionSchema approving = approver.Find(e => e.deptCode == data.cc);
+                        if (approving != null)
+                        {
+                            if (data.cc == approving.deptCode)
+                            {
+                                data.status = "cc-approved";
+                                status = "cc-approved";
+                            }
+                        }
+                    }
+                    else // requester approve 55XX dept
+                    {
+                        if (data.cc.IndexOf("55") != -1)
                         {
                             data.status = "cc-approved";
                             status = "cc-approved";
@@ -351,6 +412,7 @@ namespace cip_api.controllers
             List<cipSchema> updateRange = new List<cipSchema>();
             List<ApprovalSchema> approvals = new List<ApprovalSchema>();
             string username = User.FindFirst("username")?.Value;
+            string deptCode = User.FindFirst("deptCode")?.Value;
 
             List<PermissionSchema> permissions = GetPermissions(username);
 
@@ -370,26 +432,57 @@ namespace cip_api.controllers
 
                 if (checker.Count != 0)
                 {
-                    PermissionSchema check = checker.Find(e => e.action == "checker" && e.deptCode == data.cipUpdate.costCenterOfUser);
-                    if (data.cipUpdate.costCenterOfUser == check.deptCode)
+                    if (deptCode != "55XX")
                     {
-                        status = "cost-checked";
+                        PermissionSchema check = checker.Find(e => e.action == "checker" && e.deptCode == data.cipUpdate.costCenterOfUser);
+                        if (data.cipUpdate.costCenterOfUser == check.deptCode)
+                        {
+                            status = "cost-checked";
+                        }
+                    }
+                    else // 55XX handle
+                    {
+                        if (data.cipUpdate.costCenterOfUser.IndexOf("55") != -1)
+                        {
+                            status = "cost-checked";
+                        }
                     }
                 }
                 else if (approver.Count != 0)
                 {
-                    PermissionSchema approve_act = approver.Find(e => e.action == "approver" && e.deptCode == data.cipUpdate.costCenterOfUser);
-                    if (data.cipUpdate.costCenterOfUser == approve_act.deptCode)
+                    if (deptCode != "55XX")
                     {
-                        status = "cost-approved";
+                        PermissionSchema approve_act = approver.Find(e => e.action == "approver" && e.deptCode == data.cipUpdate.costCenterOfUser);
+                        if (data.cipUpdate.costCenterOfUser == approve_act.deptCode)
+                        {
+                            status = "cost-approved";
+                        }
+                    }
+                    else // 55XX handle
+                    {
+                        if (data.cipUpdate.costCenterOfUser.IndexOf("55") != -1)
+                        {
+                            status = "cost-approved";
+                        }
                     }
                 }
                 else if (prepare.Count != 0)
                 {
-                    PermissionSchema prepare_act = prepare.Find(e => e.action == "prepare" && e.deptCode == data.cipUpdate.costCenterOfUser);
-                    if (data.cipUpdate.costCenterOfUser == prepare_act.deptCode)
+                    if (deptCode != "55XX")
                     {
-                        status = "cost-prepared";
+                        PermissionSchema prepare_act = prepare.Find(e => e.action == "prepare" && e.deptCode == data.cipUpdate.costCenterOfUser);
+                        if (data.cipUpdate.costCenterOfUser == prepare_act.deptCode)
+                        {
+                            status = "cost-prepared";
+                        }
+                    }
+                    else
+                    {
+                        PermissionSchema prepare_act = prepare.Find(e => e.action == "prepare" && data.cipUpdate.costCenterOfUser.IndexOf("55") != -1);
+                        if (data.cipUpdate.costCenterOfUser.IndexOf("55") != 1)
+                        {
+                            status = "cost-prepared";
+                        }
                     }
                 }
 
@@ -420,8 +513,18 @@ namespace cip_api.controllers
             try
             {
                 string deptCode = User.FindFirst("deptCode")?.Value;
-                Console.WriteLine(deptCode);
-                List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf(item.costCenterOfUser) != -1).ToList();
+                // Console.WriteLine(deptCode);
+                List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+
+                if (deptCode != "55XX")
+                {
+                    cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf(item.costCenterOfUser) != -1).ToList();
+                }
+                else
+                {
+                    cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => deptCode.IndexOf("55") != -1).ToList();
+                }
+
 
                 MemoryStream stream = new MemoryStream();
 
