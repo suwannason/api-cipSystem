@@ -25,8 +25,8 @@ namespace cip_api.controllers
             _config = config;
         }
 
-        [HttpGet]
-        public ActionResult export()
+        [HttpPost]
+        public ActionResult export(request.ExportACCrequest body)
         {
             try
             {
@@ -37,9 +37,12 @@ namespace cip_api.controllers
                     return Unauthorized(new { success = false, message = "Permission denied." });
                 }
 
-                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "finished" && item.qty == "1").ToList();
+                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "finished" && item.qty == "1" && item.workType == body.workType).ToList();
                 db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "finished" && (item.newBFMorAddBFM == "NEW BFM" || item.newBFMorAddBFM.ToLower().Trim() == "newbfm")).ToList();
-                return Ok(new { success = true, data });
+
+                List<cipSchema> returnData = data.FindAll(item => item.cipUpdate != null);
+                
+                return Ok(new { success = true, data = returnData });
 
 
             }
@@ -111,6 +114,16 @@ namespace cip_api.controllers
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                return Problem(e.StackTrace);
+            }
+        }
+    
+        [HttpPost("excel")]
+        public ActionResult WriteTodept(request.exportToForm body) {
+
+            try {
+                return Ok();
+            } catch (Exception e) {
                 return Problem(e.StackTrace);
             }
         }

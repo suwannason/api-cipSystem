@@ -67,28 +67,135 @@ namespace cip_api.controllers
         [HttpPost("upload"), Consumes("multipart/form-data")]
         public ActionResult upload([FromForm] CIPupload body)
         {
-            string rootFolder = Directory.GetCurrentDirectory();
-            string pathString2 = @"\API site\files\CIP-system\upload\";
-            string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
-
-            if (!Directory.Exists(serverPath))
+            try
             {
-                Directory.CreateDirectory(serverPath);
-            }
-            string deptCode = User.FindFirst("deptCode").Value;
-            string username = User.FindFirst("username")?.Value;
-            string fileName = System.Guid.NewGuid().ToString() + "-" + body.file.FileName;
-            FileStream strem = System.IO.File.Create($"{serverPath}{fileName}");
-            body.file.CopyTo(strem);
-            strem.Close();
+                string rootFolder = Directory.GetCurrentDirectory();
+                string pathString2 = @"\API site\files\CIP-system\upload\";
+                string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
 
-            string path = $"{serverPath}{fileName}";
-            FileInfo Existfile = new FileInfo(path);
+                if (!Directory.Exists(serverPath))
+                {
+                    Directory.CreateDirectory(serverPath);
+                }
+                string deptCode = User.FindFirst("deptCode").Value;
+                string username = User.FindFirst("username")?.Value;
+                string fileName = System.Guid.NewGuid().ToString() + "-" + body.file.FileName;
+                FileStream strem = System.IO.File.Create($"{serverPath}{fileName}");
+                body.file.CopyTo(strem);
+                strem.Close();
 
-            List<cipSchema> excelData = new List<cipSchema>();
-            string dateNow = DateTime.Now.ToString("yyyy/MM/dd");
-            if (User.FindFirst("dept").Value.ToLower() == "acc")
-            {
+                string path = $"{serverPath}{fileName}";
+                FileInfo Existfile = new FileInfo(path);
+
+                List<cipSchema> excelData = new List<cipSchema>();
+                string dateNow = DateTime.Now.ToString("yyyy/MM/dd");
+                if (User.FindFirst("dept").Value.ToLower() == "acc")
+                {
+                    using (ExcelPackage excel = new ExcelPackage(Existfile))
+                    {
+                        ExcelWorkbook workbook = excel.Workbook;
+                        ExcelWorksheet sheet = workbook.Worksheets[0];
+
+                        int colCount = sheet.Dimension.End.Column;
+                        int rowCount = sheet.Dimension.End.Row;
+
+                        for (int row = 3; row <= rowCount; row += 1)
+                        {
+                            cipSchema item = new cipSchema();
+
+                            for (int col = 1; col < colCount; col += 1)
+                            {
+                                string value = sheet.Cells[row, col].Value?.ToString();
+                                if (value == null)
+                                {
+                                    value = "-";
+                                }
+                                switch (col)
+                                {
+                                    case 1: item.workType = value; break;
+                                    case 2: item.projectNo = value; break;
+                                    case 3: item.cipNo = value; break;
+                                    case 4: item.subCipNo = value; break;
+                                    case 5: item.poNo = value; break;
+                                    case 6: item.vendorCode = value; break;
+                                    case 7: item.vendor = value; break;
+                                    case 8: item.acqDate = value; break;
+                                    case 9: item.invDate = value; break;
+                                    case 10: item.receivedDate = value; break;
+                                    case 11: item.invNo = value; break;
+                                    case 12: item.name = value; break;
+                                    case 13: item.qty = value; break;
+                                    case 14: item.exRate = value; break;
+                                    case 15: item.cur = value; break;
+                                    case 16: item.perUnit = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 17: item.totalJpy = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 18: item.totalThb = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 19: item.averageFreight = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 20: item.averageInsurance = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 21: item.totalJpy_1 = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 22: item.totalThb_1 = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 23: item.perUnitThb = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 24: item.cc = value; break;
+                                    case 25: item.totalOfCip = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 26: item.budgetCode = value; break;
+                                    case 27: item.prDieJig = value; break;
+                                    case 28: item.model = value; break;
+                                    case 29: item.partNoDieNo = value; break;
+                                }
+                                item.status = "open";
+                                item.createDate = System.DateTime.Now.ToString("yyyy/MM/dd");
+                            }
+                            if (item.cipNo != "-")
+                            {
+                                cipSchema cipCreate = excelData.Find(e => e.cipNo == item.cipNo && e.subCipNo == item.subCipNo && e.cc == item.cc);
+                                if (cipCreate == null)
+                                {
+                                    excelData.Add(item);
+                                }
+                            }
+                        }
+                    }
+                    // return Ok(excelData);
+                    db.CIP.AddRange(excelData);
+                    db.SaveChanges();
+                    // SENDING MAIL
+                    // PermissionSchema acc_user = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == username).FirstOrDefault();
+                    // List<string> ccDept = excelData.Select(c => c.cc).Distinct().ToList();
+
+                    // string mailBody = "TO : All Concerned \n \n I would like to Confirm CIP-Domestic and Oversea. \n At link <WEB APP LINK> \n Please, input data pink area (data for user confirm). \n";
+                    // mailBody += "\n\n\n Thank You \n Best Regards \n";
+                    // mailBody += "**************************************************** \n";
+                    // mailBody += "\t\t\t " + " " + User.FindFirst("name")?.Value + " \n";
+                    // mailBody += "\t\t\t Accounting Dept. \n";
+                    // mailBody += "\t\t Canon Prachinburi (Thailand) Ltd. \n";
+                    // mailBody += "\t\t E-mail : " + acc_user.email + " \n";
+                    // mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
+                    // mailBody += "****************************************************";
+                    // foreach (string cc in ccDept)
+                    // {
+                    //     List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
+
+                    //     if (ccPrepare.Count != 0)
+                    //     {
+                    //         foreach (PermissionSchema userPrepare in ccPrepare)
+                    //         {
+                    //             sendMail(
+                    //                 acc_user.email,
+                    //                 userPrepare.email,
+                    //                 "Confirm CIP-Domestic&Oversea" + DateTime.Now.ToString("yyyyMMdd") + " (Deadline within " + DateTime.Now.ToString("yyyy/MM/dd") + " time 16.00 pm.)",
+                    //                mailBody
+                    //             );
+                    //         }
+                    //     }
+                    // }
+                    // SENDING MAIL
+                    return Ok(new { success = true, message = "Upload data success." });
+                }
+
+                List<cipUpdateSchema> items = new List<cipUpdateSchema>();
+
+                List<cipSchema> updateStatus = new List<cipSchema>();
+
                 using (ExcelPackage excel = new ExcelPackage(Existfile))
                 {
                     ExcelWorkbook workbook = excel.Workbook;
@@ -97,11 +204,12 @@ namespace cip_api.controllers
                     int colCount = sheet.Dimension.End.Column;
                     int rowCount = sheet.Dimension.End.Row;
 
+                    Console.WriteLine(colCount + " == " + rowCount);
                     for (int row = 3; row <= rowCount; row += 1)
                     {
-                        cipSchema item = new cipSchema();
+                        cipUpdateSchema item = new cipUpdateSchema();
 
-                        for (int col = 1; col < colCount; col += 1)
+                        for (int col = 3; col <= colCount; col += 1)
                         {
                             string value = sheet.Cells[row, col].Value?.ToString();
                             if (value == null)
@@ -110,218 +218,101 @@ namespace cip_api.controllers
                             }
                             switch (col)
                             {
-                                case 1: item.workType = value; break;
-                                case 2: item.projectNo = value; break;
-                                case 3: item.cipNo = value; break;
-                                case 4: item.subCipNo = value; break;
-                                case 5: item.poNo = value; break;
-                                case 6: item.vendorCode = value; break;
-                                case 7: item.vendor = value; break;
-                                case 8: item.acqDate = value; break;
-                                case 9: item.invDate = value; break;
-                                case 10: item.receivedDate = value; break;
-                                case 11: item.invNo = value; break;
-                                case 12: item.name = value; break;
-                                case 13: item.qty = value; break;
-                                case 14: item.exRate = value; break;
-                                case 15: item.cur = value; break;
-                                case 16: item.perUnit = value; break;
-                                case 17: item.totalJpy = value; break;
-                                case 18: item.totalThb = value; break;
-                                case 19: item.averageFreight = value; break;
-                                case 20: item.averageInsurance = value; break;
-                                case 21: item.totalJpy_1 = value; break;
-                                case 22: item.totalThb_1 = value; break;
-                                case 23: item.perUnitThb = value; break;
-                                case 24: item.cc = value; break;
-                                case 25: item.totalOfCip = value; break;
-                                case 26: item.budgetCode = value; break;
-                                case 27: item.prDieJig = value; break;
-                                case 28: item.model = value; break;
-                                case 29: item.partNoDieNo = value; break;
-                            }
-                            item.status = "open";
-                            item.createDate = System.DateTime.Now.ToString("yyyy/MM/dd");
-                        }
-                        if (item.cipNo != "-")
-                        {
-                            cipSchema cipCreate = excelData.Find(e => e.cipNo == item.cipNo && e.subCipNo == item.subCipNo && e.cc == item.cc);
-                            if (cipCreate == null)
-                            {
-                                excelData.Add(item);
-                            }
-                        }
-                    }
-                }
-                db.CIP.AddRange(excelData);
-                db.SaveChanges();
-                // SENDING MAIL
-                // PermissionSchema acc_user = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == username).FirstOrDefault();
-                // List<string> ccDept = excelData.Select(c => c.cc).Distinct().ToList();
-
-                // string mailBody = "TO : All Concerned \n \n I would like to Confirm CIP-Domestic and Oversea. \n At link <WEB APP LINK> \n Please, input data pink area (data for user confirm). \n";
-                // mailBody += "\n\n\n Thank You \n Best Regards \n";
-                // mailBody += "**************************************************** \n";
-                // mailBody += "\t\t\t " + " " + User.FindFirst("name")?.Value + " \n";
-                // mailBody += "\t\t\t Accounting Dept. \n";
-                // mailBody += "\t\t Canon Prachinburi (Thailand) Ltd. \n";
-                // mailBody += "\t\t E-mail : " + acc_user.email + " \n";
-                // mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
-                // mailBody += "****************************************************";
-                // foreach (string cc in ccDept)
-                // {
-                //     List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
-
-                //     if (ccPrepare.Count != 0)
-                //     {
-                //         foreach (PermissionSchema userPrepare in ccPrepare)
-                //         {
-                //             sendMail(
-                //                 acc_user.email,
-                //                 userPrepare.email,
-                //                 "Confirm CIP-Domestic&Oversea" + DateTime.Now.ToString("yyyyMMdd") + " (Deadline within " + DateTime.Now.ToString("yyyy/MM/dd") + " time 16.00 pm.)",
-                //                mailBody
-                //             );
-                //         }
-                //     }
-                // }
-                // SENDING MAIL
-                return Ok(new { success = true, message = "Upload data success." });
-            }
-
-            List<cipUpdateSchema> items = new List<cipUpdateSchema>();
-
-            List<cipSchema> updateStatus = new List<cipSchema>();
-
-            using (ExcelPackage excel = new ExcelPackage(Existfile))
-            {
-                ExcelWorkbook workbook = excel.Workbook;
-                ExcelWorksheet sheet = workbook.Worksheets[0];
-
-                int colCount = sheet.Dimension.End.Column;
-                int rowCount = sheet.Dimension.End.Row;
-
-                Console.WriteLine(colCount + " == " + rowCount);
-                for (int row = 3; row <= rowCount; row += 1)
-                {
-                    cipUpdateSchema item = new cipUpdateSchema();
-
-                    for (int col = 3; col <= colCount; col += 1)
-                    {
-                        string value = sheet.Cells[row, col].Value?.ToString();
-                        if (value == null)
-                        {
-                            value = "-";
-                        }
-                        switch (col)
-                        {
-                            case 3:
-                                if (value == "-")
-                                {
+                                case 3:
+                                    if (value == "-")
+                                    {
+                                        break;
+                                    }
+                                    cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open")).FirstOrDefault();
+                                    if (data != null)
+                                    {
+                                        item.cipSchemaid = data.id;
+                                        data.status = "save";
+                                        updateStatus.Add(data);
+                                    }
                                     break;
-                                }
-                                cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open")).FirstOrDefault();
-                                if (data != null)
-                                {
-                                    item.cipSchemaid = data.id;
-                                    data.status = "save";
-                                    updateStatus.Add(data);
-                                }
-                                break;
 
-                            case 30:
-                                if (value != "-" && value.IndexOf(" ") != -1)
-                                {
-                                    item.planDate = value.Substring(0, value.IndexOf(" "));
-                                }
-                                else
-                                {
-                                    item.planDate = value;
-                                }
-                                break;
-                            case 31:
-                                if (value != "-" && value.IndexOf(" ") != -1)
-                                {
-                                    item.actDate = value.Substring(0, value.IndexOf(" "));
-                                }
-                                else
-                                {
-                                    item.actDate = value;
-                                }
-                                break;
-                            case 32: item.result = value; break;
-                            case 33: item.reasonDiff = value; break;
-                            case 34: item.fixedAssetCode = value; break;
-                            case 35: item.classFixedAsset = value; break;
-                            case 36:
-                                if (value.IndexOf(',') != -1 || value.IndexOf(':') != -1
-                                    || value.IndexOf('"') != -1 || value.IndexOf('#') != -1
-                                    || value.IndexOf('!') != -1 || value.IndexOf('*') != -1 || value.Length > 100)
-                                {
-                                    return BadRequest(new { success = false, message = "Not allow Symbol value." });
-                                }
-                                item.fixAssetName = value;
-                                break;
-                            case 37: item.serialNo = value; break;
-                            case 38: item.partNumberDieNo = value; break;
-                            case 39: item.processDie = value; break;
-                            case 40: item.model = value; break;
-                            case 41: item.costCenterOfUser = value; break;
-                            case 42: item.tranferToSupplier = value; break;
-                            case 43: item.upFixAsset = value; break;
-                            case 44: item.newBFMorAddBFM = value; break;
-                            case 45: item.reasonForDelay = value; break;
-                            case 46: item.addCipBfmNo = value; break;
-                            case 47: item.remark = value; break;
-                            case 48: item.boiType = value; break;
+                                case 30: item.planDate = value; break;
+                                case 31: item.actDate = value;break;
+                                case 32: item.result = value; break;
+                                case 33: item.reasonDiff = value; break;
+                                case 34: item.fixedAssetCode = value; break;
+                                case 35: item.classFixedAsset = value; break;
+                                case 36:
+                                    if (value.IndexOf(',') != -1 || value.IndexOf(':') != -1
+                                        || value.IndexOf('"') != -1 || value.IndexOf('#') != -1
+                                        || value.IndexOf('!') != -1 || value.IndexOf('*') != -1 || value.Length > 100)
+                                    {
+                                        return BadRequest(new { success = false, message = "Not allow Symbol fix asset name value." });
+                                    }
+                                    item.fixAssetName = value;
+                                    break;
+                                case 37: item.serialNo = value; break;
+                                case 38: item.partNumberDieNo = value; break;
+                                case 39: item.processDie = value; break;
+                                case 40: item.model = value; break;
+                                case 41: item.costCenterOfUser = value; break;
+                                case 42: item.tranferToSupplier = value; break;
+                                case 43: item.upFixAsset = value; break;
+                                case 44: item.newBFMorAddBFM = value; break;
+                                case 45: item.reasonForDelay = value; break;
+                                case 46: item.addCipBfmNo = value; break;
+                                case 47: item.remark = value; break;
+                                case 48: item.boiType = value; break;
+                            }
+                            item.status = "active";
+                            item.createDate = dateNow;
+
                         }
-                        item.status = "active";
-                        item.createDate = dateNow;
-
-                    }
-                    if (item.cipSchemaid != 0)
-                    {
-                        items.Add(item);
+                        if (item.cipSchemaid != 0)
+                        {
+                            items.Add(item);
+                        }
                     }
                 }
+
+                // return Ok(items);
+                List<ApprovalSchema> prepare = new List<ApprovalSchema>();
+
+                string preparer = User.FindFirst("username").Value;
+                foreach (cipSchema item in updateStatus)
+                {
+                    string status = "save";
+                    cipUpdateSchema cipupdateItem = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item.id).FirstOrDefault();
+
+                    if (cipupdateItem == null)
+                    {
+                        status = "save";
+                    }
+                    else
+                    {
+                        if (item.cc != cipupdateItem.costCenterOfUser)
+                        {
+                            status = "cost-prepared";
+                        }
+                    }
+                    item.status = status;
+                    prepare.Add(new ApprovalSchema
+                    {
+                        cipSchemaid = item.id,
+                        date = dateNow,
+                        empNo = preparer,
+                        onApproveStep = status,
+                    });
+                }
+
+                db.APPROVAL.AddRange(prepare);
+                db.CIP_UPDATE.AddRange(items);
+                db.CIP.UpdateRange(updateStatus);
+                db.SaveChanges();
+
+                return Ok(items);
             }
-
-            // return Ok(items);
-            List<ApprovalSchema> prepare = new List<ApprovalSchema>();
-
-            string preparer = User.FindFirst("username").Value;
-            foreach (cipSchema item in updateStatus)
+            catch (System.Exception e)
             {
-                string status = "save";
-                cipUpdateSchema cipupdateItem = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item.id).FirstOrDefault();
-
-                if (cipupdateItem == null)
-                {
-                    status = "save";
-                }
-                else
-                {
-                    if (item.cc != cipupdateItem.costCenterOfUser)
-                    {
-                        status = "cost-prepared";
-                    }
-                }
-                item.status = status;
-                prepare.Add(new ApprovalSchema
-                {
-                    cipSchemaid = item.id,
-                    date = dateNow,
-                    empNo = preparer,
-                    onApproveStep = status,
-                });
+                Console.WriteLine(e.Source);
+                return Problem(e.StackTrace);
             }
-
-            db.APPROVAL.AddRange(prepare);
-            db.CIP_UPDATE.AddRange(items);
-            db.CIP.UpdateRange(updateStatus);
-            db.SaveChanges();
-
-            return Ok(items);
         }
 
         [HttpGet("list")]

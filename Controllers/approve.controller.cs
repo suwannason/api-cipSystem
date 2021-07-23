@@ -291,6 +291,7 @@ namespace cip_api.controllers
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
             List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
 
+            Console.WriteLine(username);
             string status = "";
             foreach (string item in body.id)
             {
@@ -298,7 +299,7 @@ namespace cip_api.controllers
                 ApprovalSchema approve = new ApprovalSchema();
                 cipSchema data = db.CIP.Find(id);
 
-                if (checker != null)
+                if (checker != null && data.status == "save")
                 {
                     if ((data.cc == checker.deptCode) && data.status != "cc-checked")
                     {
@@ -311,7 +312,7 @@ namespace cip_api.controllers
                         status = "cc-checked";
                     }
                 }
-                else if (approver.Count != 0)
+                else if (approver.Count != 0 && data.status == "cc-checked")
                 {
                     if (deptCode != "55XX")
                     {
@@ -430,7 +431,7 @@ namespace cip_api.controllers
                 cipSchema data = db.CIP.Find(id);
                 db.CIP_UPDATE.Where<cipUpdateSchema>(row => row.cipSchemaid == id).FirstOrDefault();
 
-                if (checker.Count != 0)
+                if (checker.Count != 0 && data.status == "cost-prepared")
                 {
                     if (deptCode != "55XX")
                     {
@@ -448,7 +449,7 @@ namespace cip_api.controllers
                         }
                     }
                 }
-                else if (approver.Count != 0)
+                else if (approver.Count != 0 && data.status == "cost-checked")
                 {
                     if (deptCode != "55XX")
                     {
@@ -466,7 +467,7 @@ namespace cip_api.controllers
                         }
                     }
                 }
-                else if (prepare.Count != 0)
+                else if (prepare.Count != 0 && data.status == "cc-approved")
                 {
                     if (deptCode != "55XX")
                     {
