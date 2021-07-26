@@ -88,41 +88,54 @@ namespace cip_api.controllers
             return Ok(new { success = true, messsage = "ITC confirmed", data = returData, });
         }
         [HttpPut("confirm")]
-        public ActionResult confirmData(Approve body)
+        public ActionResult confirmData(ITCConfirm body)
         {
-            string username = User.FindFirst("username")?.Value;
-
-            List<PermissionSchema> permissions = GetPermissions(username);
-
-            List<PermissionSchema> isBoi = permissions.FindAll(e => e.deptShortName == "ITC BOI");
-            if (isBoi.Count == 0)
+            try
             {
-                return BadRequest(new { success = false, message = "Permission denied." });
-            }
-            List<ApprovalSchema> approval = new List<ApprovalSchema>();
-            List<cipSchema> updateCip = new List<cipSchema>();
+                string username = User.FindFirst("username")?.Value;
+                List<PermissionSchema> permissions = GetPermissions(username);
 
-            foreach (string item in body.id)
-            {
-                Int32 id = Int32.Parse(item);
-
-                cipSchema cip = db.CIP.Find(id);
-                cip.status = "itc-confirmed";
-
-                ApprovalSchema approve = new ApprovalSchema
+                List<PermissionSchema> isBoi = permissions.FindAll(e => e.deptShortName == "ITC BOI");
+                if (isBoi.Count == 0)
                 {
-                    cipSchemaid = id,
-                    date = DateTime.Now.ToString("yyyy/MM/dd"),
-                    empNo = username,
-                    onApproveStep = "itc-confirmed",
-                };
-                approval.Add(approve);
-                updateCip.Add(cip);
+                    return BadRequest(new { success = false, message = "Permission denied." });
+                }
+                List<ApprovalSchema> approval = new List<ApprovalSchema>();
+                List<cipSchema> updateCip = new List<cipSchema>();
+                List<cipUpdateSchema> cipUpdate_update = new List<cipUpdateSchema>();
+
+                foreach (request.confirmBox item in body.confirm.ToArray())
+                {
+
+                    cipSchema cip = db.CIP.Find(item.id);
+                    cip.status = "itc-confirmed";
+
+                    cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item.id).FirstOrDefault();
+                    cipUpdate.boiType = item.boiType;
+                    cipUpdate_update.Add(cipUpdate);
+
+                    ApprovalSchema approve = new ApprovalSchema
+                    {
+                        cipSchemaid = item.id,
+                        date = DateTime.Now.ToString("yyyy/MM/dd"),
+                        empNo = username,
+                        onApproveStep = "itc-confirmed",
+                    };
+                    approval.Add(approve);
+                    updateCip.Add(cip);
+                }
+                db.APPROVAL.AddRange(approval);
+                db.CIP.UpdateRange(updateCip);
+                db.CIP_UPDATE.UpdateRange(cipUpdate_update);
+                db.SaveChanges();
+                return Ok(new { success = true, message = "Confirm data success. " });
             }
-            db.APPROVAL.AddRange(approval);
-            db.CIP.UpdateRange(updateCip);
-            db.SaveChanges();
-            return Ok(new { success = true, message = "Confirm data success. " });
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return Problem(e.Message);
+            }
+
         }
     }
 }

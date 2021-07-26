@@ -119,7 +119,7 @@ namespace cip_api.controllers
         {
             try
             {
-                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finish").ToList();
+                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finished").ToList();
                 db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
 
                 List<dynamic> returnData = new List<dynamic>();
@@ -129,46 +129,46 @@ namespace cip_api.controllers
                 {
                     if (item.status == "save")
                     {
-                        message = "Waiting for user check";
+                        message = "On user check";
 
                     }
                     else if (item.status == "cc-checked")
                     {
-                        message = "Waiting for user approve";
+                        message = "On user approve";
                     }
 
                     else if (item.status == "cost-checked")
                     {
-                        message = "Waiting for Cost center approve";
+                        message = "On Cost center approve";
                     }
                     else if (item.status == "itc-confirmed")
                     {
                         if (item.cipUpdate.result == "NG")
                         {
-                            message = "Waiting for ACC confirm diff";
+                            message = "On ACC confirm diff";
                         }
                         else
                         {
-                            message = "Waiting for confirm FA";
+                            message = "On confirm FA";
                         }
                     }
                     else if (item.status == "cc-approved")
                     {
                         if (item.cc != item.cipUpdate.costCenterOfUser)
                         {
-                            message = "Waiting for Cost center check";
+                            message = "On Cost center check";
                         }
                         else if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
                         {
-                            message = "Waiting for ITC confirm";
+                            message = "On ITC confirm";
                         }
                         else if (item.cipUpdate.result == "NG")
                         {
-                            message = "Waiting for ACC confirm diff";
+                            message = "On ACC confirm diff";
                         }
                         else
                         {
-                            message = "Waiting for confirm FA";
+                            message = "On confirm FA";
                         }
 
                     }
@@ -176,24 +176,29 @@ namespace cip_api.controllers
                     {
                         if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
                         {
-                            message = "Waiting for ITC confirm";
+                            message = "On ITC confirm";
                         }
                         else if (item.cipUpdate.result == "NG")
                         {
-                            message = "Waiting for ACC confirm diff";
+                            message = "On ACC confirm diff";
                         }
                         else
                         {
-                            message = "Waiting for confirm FA";
+                            message = "On confirm FA";
                         }
                     }
                     else if (item.status == "acc-checked")
                     {
-                        message = "Waiting for ACC approve diff";
+                        message = "On ACC approve diff";
                     }
                     else if (item.status == "acc-approved")
                     {
-                        message = "Waiting for confirm FA";
+                        message = "On confirm FA";
+
+                    } else if (item.status == "open") {
+                        message = "On Requester prepare";
+                    } else if (item.status == "draft") {
+                        message = "On Requester drafted";
                     }
                     returnData.Add(
                         new
@@ -203,6 +208,7 @@ namespace cip_api.controllers
                             workType = item.workType,
                             projectNo = item.projectNo,
                             cipNo = item.cipNo,
+                            cc = item.cc,
                             subCipNo = item.subCipNo,
                             poNo = item.poNo,
                             vendorCode = item.vendorCode,

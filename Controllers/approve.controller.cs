@@ -112,19 +112,52 @@ namespace cip_api.controllers
                     username = User.FindFirst("username")?.Value;
                     deptCode = User.FindFirst("deptCode")?.Value;
                 }
-
                 List<PermissionSchema> permissions = GetPermissions(username);
+
+                PermissionSchema preparer = permissions.Find(e => e.action == "prepare");
 
                 PermissionSchema checker = permissions.Find(e => e.action == "checker");
                 List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
 
                 string message = "";
                 List<cipSchema> data = new List<cipSchema>();
+                if (preparer != null)
+                {
+                    message = "CIP for confirm upload";
+                    List<string> multidept = deptCode.Split(',').ToList();
+
+                    if (multidept.Count > 1)
+                    {
+                        foreach (string code in multidept)
+                        {
+                            if (code == "55XX")
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            }
+                            else
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        if (deptCode == "55XX")
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                        }
+                        else
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
+                        }
+                    }
+                }
                 if (checker != null)
                 {
-                    List<string> multidept = checker.deptCode.Split(',').ToList();
-
+                    List<string> multidept = deptCode.Split(',').ToList();
                     message = "CIP for data check.";
+
                     if (multidept.Count > 1)
                     {
                         foreach (string code in multidept)
@@ -135,22 +168,21 @@ namespace cip_api.controllers
                             }
                             else
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && deptCode.IndexOf(code) != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
                             }
 
                         }
                     }
                     else
                     {
-                        if (checker.deptCode == "55XX")
+                        if (deptCode == "55XX")
                         {
                             data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
                         }
                         else
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc == checker.deptCode).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
                         }
-
                     }
 
                 }
@@ -158,17 +190,33 @@ namespace cip_api.controllers
                 {
                     message = "CIP for data approve.";
 
-                    foreach (PermissionSchema permission in approver)
+                    List<string> multidept = deptCode.Split(',').ToList();
+                    if (multidept.Count > 1)
                     {
-                        if (permission.deptCode == "55XX")
+                        foreach (string code in multidept)
+                        {
+                            if (code == "55XX")
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            }
+                            else
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine(deptCode);
+                        if (deptCode == "55XX")
                         {
                             data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
                         }
                         else
                         {
-                            data.AddRange((db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc == permission.deptCode).ToList<cipSchema>()));
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
                         }
-
                     }
                 }
                 if (user != null)
@@ -216,58 +264,88 @@ namespace cip_api.controllers
             string message = "";
             if (checker != null)
             {
+                List<string> multidept = deptCode.Split(',').ToList();
                 message = "CIP on Cost center check";
 
-                if (deptCode == "55XX")
+                foreach (string dept in multidept)
                 {
-                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-prepared" && item.cipUpdate.costCenterOfUser != item.cc && item.cipUpdate.costCenterOfUser.IndexOf("55") != -1).ToList();
-                    //    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
-                }
-                else
-                {
-                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-prepared" && item.cipUpdate.costCenterOfUser != item.cc && item.cipUpdate.costCenterOfUser == deptCode).ToList();
+                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                    if (dept == "55XX")
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                    }
+                    else
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                    }
+
+                    foreach (cipUpdateSchema cip_update in cipUpdate)
+                    {
+                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cost-prepared").FirstOrDefault();
+                        if (dataItem != null)
+                        {
+                            data.Add(dataItem);
+                        }
+                    }
                 }
 
             }
             if (approver != null)
             {
+                List<string> multidept = deptCode.Split(',').ToList();
                 message = "CIP on Cost center approve";
-                if (deptCode == "55XX")
+
+                foreach (string dept in multidept)
                 {
-                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-checked" && item.cipUpdate.costCenterOfUser != item.cc && item.cipUpdate.costCenterOfUser.IndexOf("55") != -1).ToList();
-                }
-                else
-                {
-                    data = db.CIP.Where<cipSchema>(item => item.status == "cost-checked" && item.cipUpdate.costCenterOfUser != item.cc).ToList();
+                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                    if (dept == "55XX")
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                    }
+                    else
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                    }
+
+                    foreach (cipUpdateSchema cip_update in cipUpdate)
+                    {
+                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cost-checked").FirstOrDefault();
+                        if (dataItem != null)
+                        {
+                            data.Add(dataItem);
+                        }
+
+                    }
                 }
 
             }
             if (prepare != null)
             {
-                List<cipSchema> onApproved = db.CIP.Where<cipSchema>(item => item.status == "cc-approved").ToList();
-
+                List<string> multidept = deptCode.Split(',').ToList();
                 message = "CIP on Cost center prepare";
-                foreach (cipSchema item in onApproved)
+
+                foreach (string dept in multidept)
                 {
-                    if (deptCode != "55XX")
+                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                    if (dept == "55XX")
                     {
-                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.costCenterOfUser.IndexOf(prepare.deptCode) != -1).FirstOrDefault();
-                        if (item.cipUpdate != null)
-                        {
-                            data.Add(item);
-                        }
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
                     }
                     else
                     {
-                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.costCenterOfUser.IndexOf("55") != -1).FirstOrDefault();
-                        if (item.cipUpdate != null)
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                    }
+
+                    foreach (cipUpdateSchema cip_update in cipUpdate)
+                    {
+                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cc-approved").FirstOrDefault();
+                        if (dataItem != null)
                         {
-                            data.Add(item);
+                            data.Add(dataItem);
                         }
                     }
                 }
             }
-
             if (user != null)
             {
                 return Ok(data.Count);
@@ -288,8 +366,10 @@ namespace cip_api.controllers
 
             List<PermissionSchema> permissions = GetPermissions(username);
 
+            PermissionSchema prepared = permissions.Find(e => e.action == "prepare");
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
             List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
+
 
             Console.WriteLine(username);
             string status = "";
@@ -299,7 +379,12 @@ namespace cip_api.controllers
                 ApprovalSchema approve = new ApprovalSchema();
                 cipSchema data = db.CIP.Find(id);
 
-                if (checker != null && data.status == "save")
+                if (prepared != null && data.status == "draft")
+                {
+                    data.status = "save";
+                    status = "save";
+                }
+                else if (checker != null && data.status == "save")
                 {
                     if ((data.cc == checker.deptCode) && data.status != "cc-checked")
                     {
@@ -415,15 +500,8 @@ namespace cip_api.controllers
             string username = User.FindFirst("username")?.Value;
             string deptCode = User.FindFirst("deptCode")?.Value;
 
-            List<PermissionSchema> permissions = GetPermissions(username);
-
-            List<PermissionSchema> checker = permissions.FindAll(e => e.action == "checker");
-            List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
-            List<PermissionSchema> prepare = permissions.FindAll(e => e.action == "prepare");
-
             string status = "";
-            // return Ok(new { approver, checker});
-            Console.WriteLine(approver.Count);
+
             foreach (string item in body.id)
             {
                 Int32 id = Int32.Parse(item);
@@ -431,62 +509,67 @@ namespace cip_api.controllers
                 cipSchema data = db.CIP.Find(id);
                 db.CIP_UPDATE.Where<cipUpdateSchema>(row => row.cipSchemaid == id).FirstOrDefault();
 
-                if (checker.Count != 0 && data.status == "cost-prepared")
+                if (data.status == "cost-prepared")
                 {
-                    if (deptCode != "55XX")
-                    {
-                        PermissionSchema check = checker.Find(e => e.action == "checker" && e.deptCode == data.cipUpdate.costCenterOfUser);
-                        if (data.cipUpdate.costCenterOfUser == check.deptCode)
-                        {
-                            status = "cost-checked";
-                        }
-                    }
-                    else // 55XX handle
-                    {
-                        if (data.cipUpdate.costCenterOfUser.IndexOf("55") != -1)
-                        {
-                            status = "cost-checked";
-                        }
-                    }
-                }
-                else if (approver.Count != 0 && data.status == "cost-checked")
-                {
-                    if (deptCode != "55XX")
-                    {
-                        PermissionSchema approve_act = approver.Find(e => e.action == "approver" && e.deptCode == data.cipUpdate.costCenterOfUser);
-                        if (data.cipUpdate.costCenterOfUser == approve_act.deptCode)
-                        {
-                            status = "cost-approved";
-                        }
-                    }
-                    else // 55XX handle
-                    {
-                        if (data.cipUpdate.costCenterOfUser.IndexOf("55") != -1)
-                        {
-                            status = "cost-approved";
-                        }
-                    }
-                }
-                else if (prepare.Count != 0 && data.status == "cc-approved")
-                {
-                    if (deptCode != "55XX")
-                    {
-                        PermissionSchema prepare_act = prepare.Find(e => e.action == "prepare" && e.deptCode == data.cipUpdate.costCenterOfUser);
-                        if (data.cipUpdate.costCenterOfUser == prepare_act.deptCode)
-                        {
-                            status = "cost-prepared";
-                        }
-                    }
-                    else
-                    {
-                        PermissionSchema prepare_act = prepare.Find(e => e.action == "prepare" && data.cipUpdate.costCenterOfUser.IndexOf("55") != -1);
-                        if (data.cipUpdate.costCenterOfUser.IndexOf("55") != 1)
-                        {
-                            status = "cost-prepared";
-                        }
-                    }
-                }
+                    List<string> multidept = deptCode.Split(',').ToList();
 
+                    foreach (string deptCodeItem in multidept)
+                    {
+                        Console.WriteLine(data.cipUpdate.costCenterOfUser + " === " + deptCodeItem);
+                        if (deptCodeItem == "55XX")
+                        {
+                            status = "cost-checked";
+                        }
+                        else
+                        {
+                            if (data.cipUpdate.costCenterOfUser == deptCodeItem)
+                            {
+                                status = "cost-checked";
+                            }
+                        }
+                    }
+                }
+                else if (data.status == "cost-checked")
+                {
+                    List<string> multidept = deptCode.Split(',').ToList();
+
+                    foreach (string deptCodeItem in multidept)
+                    {
+                        Console.WriteLine(data.cipUpdate.costCenterOfUser + " === " + deptCodeItem);
+                        if (deptCodeItem == "55XX")
+                        {
+                            status = "cost-approved";
+                        }
+                        else
+                        {
+                            if (data.cipUpdate.costCenterOfUser == deptCodeItem)
+                            {
+                                status = "cost-approved";
+                            }
+                        }
+                    }
+                }
+                else if (data.status == "cc-approved")
+                {
+                    List<string> multidept = deptCode.Split(',').ToList();
+
+                    foreach (string deptCodeItem in multidept)
+                    {
+                        Console.WriteLine(data.cipUpdate.costCenterOfUser + " === " + deptCodeItem);
+                        if (deptCodeItem == "55XX")
+                        {
+                            status = "cost-prepared";
+                        }
+                        else
+                        {
+                            if (data.cipUpdate.costCenterOfUser == deptCodeItem)
+                            {
+                                status = "cost-prepared";
+                            }
+                        }
+                    }
+                }
+                Console.WriteLine("status: " + status);
                 data.status = status;
 
                 approve.onApproveStep = status;
@@ -833,6 +916,170 @@ namespace cip_api.controllers
             }
             catch (Exception e)
             {
+                return Problem(e.StackTrace);
+            }
+        }
+
+
+        [HttpPatch("download")]
+        public ActionResult download(cipDownlode body)
+        {
+            try
+            {
+                string deptCode = User.FindFirst("deptCode")?.Value;
+                string empNo = User.FindFirst("empNo")?.Value;
+                string dept = User.FindFirst("dept")?.Value;
+
+                List<cipSchema> data = new List<cipSchema>();
+
+                foreach (int id in body.id)
+                {
+                    cipSchema item = db.CIP.Find(id);
+                    db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.status == "active").ToList();
+                    data.Add(item);
+                }
+
+
+                MemoryStream stream = new MemoryStream();
+                using (ExcelPackage excel = new ExcelPackage(stream))
+                {
+                    excel.Workbook.Worksheets.Add("sheet1");
+
+                    List<string[]> header = new List<string[]>()
+                {
+                    new string[] { "Type work", "Project No.", "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
+                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (THB/JPY/USD)",
+                    "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
+                    "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model", "PART No./DIE No.",
+                    "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
+                    "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
+                    "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",
+                    "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
+                    }
+                };
+
+                    string headerRange = "A2:AQ2";
+                    ExcelWorksheet worksheet = excel.Workbook.Worksheets["sheet1"];
+                    worksheet.Cells[headerRange].LoadFromArrays(header);
+
+                    string rootFolder = Directory.GetCurrentDirectory();
+                    string pathString2 = @"\API site\files\CIP-system\download\";
+                    string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
+
+                    if (!Directory.Exists(serverPath))
+                    {
+                        Directory.CreateDirectory(serverPath);
+                    }
+                    worksheet.Cells["A1:AC1"].Merge = true;
+                    worksheet.Cells["A1"].Value = "Data for Accounting Dept.";
+                    worksheet.Cells["A1"].Style.Font.Bold = true;
+                    worksheet.Cells["A1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#9FE5E6"));
+                    worksheet.Cells["A1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["A1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+
+                    worksheet.Cells["AD1:AV1"].Merge = true;
+                    worksheet.Cells["AD1"].Value = "Data for User confirm";
+                    worksheet.Cells["AD1"].Style.Font.Bold = true;
+                    worksheet.Cells["AD1"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                    worksheet.Cells["AD1"].Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["AD1"].Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+
+                    worksheet.Cells["AD2:AU2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F1ECB9"));
+                    worksheet.Cells["AV2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#57A868"));
+
+                    worksheet.Column(1).Width = 13;
+                    worksheet.Column(2).Width = 11;
+                    worksheet.Column(6).Width = 11;
+                    worksheet.Column(8).Width = 11;
+                    worksheet.Column(10).Width = 11;
+                    worksheet.Column(11).Width = 11; // INV no.
+                    worksheet.Column(12).Width = 13;
+                    worksheet.Column(14).Width = 13;
+                    worksheet.Column(15).Width = 12;
+                    worksheet.Column(16).Width = 12;
+                    worksheet.Column(17).Width = 12;
+                    worksheet.Column(18).Width = 12;
+                    worksheet.Column(19).Width = 12;
+                    worksheet.Column(20).Width = 12;
+                    worksheet.Column(21).Width = 12;
+                    worksheet.Column(23).Width = 12;
+                    worksheet.Column(25).Width = 12; // AA
+                    worksheet.Column(27).Width = 12; // AA
+                    worksheet.Column(41).Width = 12; // AO
+                    worksheet.Column(43).Width = 15; // AO
+                    worksheet.Row(2).Height = 80;
+                    worksheet.Row(1).Height = 30;
+                    worksheet.Row(2).Style.Font.Bold = true;
+                    worksheet.Row(2).Style.VerticalAlignment = OfficeOpenXml.Style.ExcelVerticalAlignment.Center;
+                    worksheet.Row(2).Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+                    worksheet.Cells["A2:R2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                    worksheet.Cells["U2:AC2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                    worksheet.Cells["S2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C7BDF9"));
+                    worksheet.Cells["T2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#CCF9BD"));
+                    worksheet.Cells["A2:AV2"].Style.WrapText = true;
+                    worksheet.Cells["A2:AV2"].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AV2"].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AV2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                    worksheet.Cells["A2:AV2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+
+                    int row = 3;
+                    foreach (cipSchema item in data)
+                    {
+                        List<string[]> cellData = new List<string[]>()
+                    {
+                        new string [] {
+                            item.workType, item.projectNo,
+                            item.cipNo, item.subCipNo, item.poNo ,item.vendorCode, item.vendor, item.acqDate, item.invDate, item.receivedDate,
+                             item.invNo, item.name, item.qty, item.exRate, item.cur, item.perUnit, item.totalJpy, item.totalThb, item.averageFreight,
+                             item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
+                             item.model, item.partNoDieNo,
+                             item.cipUpdate.planDate, item.cipUpdate.actDate,item.cipUpdate.result,
+                             item.cipUpdate.reasonDiff, item.cipUpdate.fixedAssetCode, item.cipUpdate.classFixedAsset, item.cipUpdate.fixAssetName, item.cipUpdate.serialNo,
+                             item.cipUpdate.partNumberDieNo, item.cipUpdate.processDie, item.cipUpdate.model, item.cipUpdate.costCenterOfUser,
+                             item.cipUpdate.tranferToSupplier, item.cipUpdate.upFixAsset, item.cipUpdate.newBFMorAddBFM, item.cipUpdate.reasonForDelay,
+                             item.cipUpdate.addCipBfmNo, item.cipUpdate.remark, item.cipUpdate.boiType
+                        }
+
+                    };
+                        IExcelDataValidationList typeWork = worksheet.DataValidations.AddListValidation("A" + row);
+                        typeWork.Formula.Values.Add("Domestic");
+                        typeWork.Formula.Values.Add("Domestic-DIE");
+                        typeWork.Formula.Values.Add("Oversea");
+                        typeWork.Formula.Values.Add("Project ENG3");
+                        typeWork.Formula.Values.Add("Project-MSC");
+
+                        IExcelDataValidationList newOrAddBFM = worksheet.DataValidations.AddListValidation("AR" + row);
+                        newOrAddBFM.Formula.Values.Add("Add BFM");
+                        newOrAddBFM.Formula.Values.Add("NEW BFM");
+
+                        worksheet.Cells["AF" + row].Formula = "=+IF(AH" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AH" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AH" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AH" + row + ",2),\"OK\",\"NG\")))))";
+                        worksheet.Cells["AF" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+                        worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI" + row + ",2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
+                        worksheet.Cells["AH" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
+
+                        // set pink row space
+                        worksheet.Cells["AD" + row + ":AE" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AG" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        worksheet.Cells["AI" + row + ":AV" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
+                        // set pink row space
+                        worksheet.Cells[row, 1].LoadFromArrays(cellData);
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        row = row + 1;
+                    }
+                    string fileName = System.Guid.NewGuid().ToString() + "-" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";
+                    excel.SaveAs(new FileInfo(serverPath + fileName));
+
+                    stream.Position = 0;
+                    // return Ok(new { success = true });
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", serverPath + fileName);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
                 return Problem(e.StackTrace);
             }
         }

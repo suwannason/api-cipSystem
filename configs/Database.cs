@@ -10,4 +10,5 @@ public class Database : DbContext {
     public DbSet<userSchema> USERS { get; set; }
     public DbSet<NotificationSchema> NOTIFICATIONS { get; set; }
     public DbSet<PermissionSchema> PERMISSIONS { get; set; }
+    public DbSet<cipUpdateRejectSchema> CIP_UPDATE_REJECT { get; set; }
 }

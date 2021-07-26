@@ -227,13 +227,13 @@ namespace cip_api.controllers
                                     if (data != null)
                                     {
                                         item.cipSchemaid = data.id;
-                                        data.status = "save";
+                                        data.status = "draft";
                                         updateStatus.Add(data);
                                     }
                                     break;
 
                                 case 30: item.planDate = value; break;
-                                case 31: item.actDate = value;break;
+                                case 31: item.actDate = value; break;
                                 case 32: item.result = value; break;
                                 case 33: item.reasonDiff = value; break;
                                 case 34: item.fixedAssetCode = value; break;
@@ -272,36 +272,8 @@ namespace cip_api.controllers
                 }
 
                 // return Ok(items);
-                List<ApprovalSchema> prepare = new List<ApprovalSchema>();
 
-                string preparer = User.FindFirst("username").Value;
-                foreach (cipSchema item in updateStatus)
-                {
-                    string status = "save";
-                    cipUpdateSchema cipupdateItem = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item.id).FirstOrDefault();
-
-                    if (cipupdateItem == null)
-                    {
-                        status = "save";
-                    }
-                    else
-                    {
-                        if (item.cc != cipupdateItem.costCenterOfUser)
-                        {
-                            status = "cost-prepared";
-                        }
-                    }
-                    item.status = status;
-                    prepare.Add(new ApprovalSchema
-                    {
-                        cipSchemaid = item.id,
-                        date = dateNow,
-                        empNo = preparer,
-                        onApproveStep = status,
-                    });
-                }
-
-                db.APPROVAL.AddRange(prepare);
+                // db.APPROVAL.AddRange(prepare);
                 db.CIP_UPDATE.AddRange(items);
                 db.CIP.UpdateRange(updateStatus);
                 db.SaveChanges();
@@ -361,9 +333,9 @@ namespace cip_api.controllers
             return Ok(new { success = true, data, });
         }
         [HttpGet("history")]
-        public ActionResult history(DateRange body)
+        public ActionResult history()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => String.Compare(item.createDate, body.startDate) == 1 && String.Compare(item.createDate, body.endDate) == -1).ToList();
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "finish").ToList();
             return Ok(new { success = true, data, });
         }
 
@@ -583,6 +555,34 @@ namespace cip_api.controllers
                     db.CIP.Update(data);
 
                     cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
+                        
+                        db.CIP_UPDATE_REJECT.Add(
+                        new cipUpdateRejectSchema
+                        {
+                            actDate = cipUpdate.actDate,
+                            addCipBfmNo = cipUpdate.addCipBfmNo,
+                            boiType = cipUpdate.boiType,
+                            cipSchemaid = cipUpdate.cipSchemaid,
+                            classFixedAsset = cipUpdate.classFixedAsset,
+                            commend = "-",
+                            costCenterOfUser = cipUpdate.costCenterOfUser,
+                            createDate = DateTime.Now.ToString("yyyy/MM/dd"),
+                            fixAssetName = cipUpdate.fixAssetName,
+                            fixedAssetCode = cipUpdate.fixedAssetCode,
+                            model = cipUpdate.model,
+                            newBFMorAddBFM = cipUpdate.newBFMorAddBFM,
+                            partNumberDieNo = cipUpdate.partNumberDieNo,
+                            planDate = cipUpdate.planDate,
+                            processDie = cipUpdate.processDie,
+                            reasonDiff = cipUpdate.reasonDiff,
+                            reasonForDelay = cipUpdate.reasonForDelay,
+                            remark = cipUpdate.remark,
+                            result = cipUpdate.result,
+                            serialNo = cipUpdate.serialNo,
+                            tranferToSupplier = cipUpdate.tranferToSupplier,
+                            upFixAsset = cipUpdate.upFixAsset,
+                        }
+                    );
                     db.CIP_UPDATE.Remove(cipUpdate);
 
                     List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == Int32.Parse(id)).ToList();

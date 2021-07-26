@@ -15,6 +15,7 @@ namespace cip_api.models
         
         [Column(TypeName="nvarchar"), StringLength(15)]
         public string empNo { get; set; }
+        
         [ForeignKey("cipSchemaid"), Column(TypeName = "int"), StringLength(6), Required]
         public int cipSchemaid { get; set; }
 

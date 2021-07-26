@@ -106,7 +106,11 @@ namespace cip_api.models
         [Column(TypeName = "nvarchar"), StringLength(15), DefaultValue("-")]
         public virtual cipUpdateSchema cipUpdate { get; set; }
         public ICollection<ApprovalSchema> approval { get; set; }
+        public ICollection<cipUpdateRejectSchema> cipUpdateReject { get; set; }
         public string status { get; set; }
+
+        [Column(TypeName = "nvarchar"), StringLength(200), DefaultValue("-")]
+        public string commend { get; set; }
 
     }
 }

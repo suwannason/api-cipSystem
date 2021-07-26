@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace cip_api.models
 {
-    public class cipUpdateSchema
+    public class cipUpdateRejectSchema
     {
 
         [Key]
@@ -73,8 +73,8 @@ namespace cip_api.models
         [Column(TypeName = "nvarchar"), StringLength(10)]
         public string createDate { get; set; }
 
-        [Column(TypeName = "nvarchar"), StringLength(10)]
-        public string status { get; set; }
+        [Column(TypeName = "nvarchar"), StringLength(200)]
+        public string commend { get; set; }
         // public virtual cipSchema cip { get; set; }
 
     }
