@@ -12,4 +12,9 @@ namespace cip_api.request {
         public string startDate { get; set; }
         public string endDate { get; set; }
     }
+
+    public class rejectCip {
+        public System.Int32[] id { get; set; }
+        public string commend { get; set; }
+    }
 }

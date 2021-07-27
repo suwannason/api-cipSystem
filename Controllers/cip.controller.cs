@@ -12,7 +12,6 @@ using System;
 using System.Drawing;
 using System.Net.Http;
 using System.Threading.Tasks;
-using OfficeOpenXml.DataValidation;
 using OfficeOpenXml.DataValidation.Contracts;
 
 namespace cip_api.controllers
@@ -302,21 +301,33 @@ namespace cip_api.controllers
             string deptCode = User.FindFirst("deptCode")?.Value;
 
             Console.WriteLine(deptCode);
-            data = db.CIP.Where<cipSchema>(item => (item.status == "open" || item.status == "reject") && item.cc == deptCode)
-               .Select(fields =>
-               new cipSchema
-               {
-                   cipNo = fields.cipNo,
-                   subCipNo = fields.subCipNo,
-                   vendor = fields.vendor,
-                   name = fields.name,
-                   qty = fields.qty,
-                   totalThb = fields.totalThb,
-                   cc = fields.cc,
-                   id = fields.id
-               })
-               .ToList<cipSchema>();
+            List<cipSchema> returnData = new List<cipSchema>();
 
+            List<string> multidept = deptCode.Split(',').ToList();
+            foreach (string code in multidept)
+            {
+
+                data = db.CIP.Where<cipSchema>(item => (item.status == "open" || item.status == "reject") && item.cc == code)
+                   .Select(fields =>
+                   new cipSchema
+                   {
+                       cipNo = fields.cipNo,
+                       subCipNo = fields.subCipNo,
+                       vendor = fields.vendor,
+                       name = fields.name,
+                       qty = fields.qty,
+                       totalThb = fields.totalThb,
+                       cc = fields.cc,
+                       status = fields.status,
+                       id = fields.id,
+                       commend = fields.commend,
+                   })
+                   .ToList<cipSchema>();
+
+                returnData.AddRange(data);
+            }
+
+            returnData = returnData.GroupBy(x => x.id).Select(x => x.First()).ToList();
             // List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == deptCode && item.status != "finish").ToList();
 
             // if (cipUpdate.Count > 0)
@@ -330,7 +341,7 @@ namespace cip_api.controllers
             //         }
             //     }
             // }
-            return Ok(new { success = true, data, });
+            return Ok(new { success = true, data = returnData, });
         }
         [HttpGet("history")]
         public ActionResult history()
@@ -478,9 +489,9 @@ namespace cip_api.controllers
                         newOrAddBFM.Formula.Values.Add("Add BFM");
                         newOrAddBFM.Formula.Values.Add("NEW BFM");
 
-                        worksheet.Cells["AF" + row].Formula = "=+IF(AH" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AH" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AH" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AH" + row + ",2),\"OK\",\"NG\")))))";
+                        worksheet.Cells["AF" + row].Formula = "=+IF(AI" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AI" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AI" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AI" + row + ",2),\"OK\",\"NG\")))))";
                         worksheet.Cells["AF" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
-                        worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI" + row + ",2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
+                        worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI3,2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
                         worksheet.Cells["AH" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
 
                         // set pink row space
@@ -542,52 +553,57 @@ namespace cip_api.controllers
             }
         }
 
-        [HttpDelete("reject/{id}")]
-        public ActionResult rejectCip(string id)
+        [HttpPost("reject/requester")]
+        public ActionResult rejectCip(rejectCip body)
         {
             try
             {
-                cipSchema data = db.CIP.Find(Int32.Parse(id));
-
-                if (data != null)
+                foreach (Int32 id in body.id)
                 {
-                    data.status = "open";
-                    db.CIP.Update(data);
+                    cipSchema data = db.CIP.Find(id);
 
-                    cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
-                        
-                        db.CIP_UPDATE_REJECT.Add(
-                        new cipUpdateRejectSchema
+                    if (data != null)
+                    {
+                        data.status = "reject";
+                        data.commend = body.commend;
+                        db.CIP.Update(data);
+
+                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == id).FirstOrDefault();
+                        if (cipUpdate != null)
                         {
-                            actDate = cipUpdate.actDate,
-                            addCipBfmNo = cipUpdate.addCipBfmNo,
-                            boiType = cipUpdate.boiType,
-                            cipSchemaid = cipUpdate.cipSchemaid,
-                            classFixedAsset = cipUpdate.classFixedAsset,
-                            commend = "-",
-                            costCenterOfUser = cipUpdate.costCenterOfUser,
-                            createDate = DateTime.Now.ToString("yyyy/MM/dd"),
-                            fixAssetName = cipUpdate.fixAssetName,
-                            fixedAssetCode = cipUpdate.fixedAssetCode,
-                            model = cipUpdate.model,
-                            newBFMorAddBFM = cipUpdate.newBFMorAddBFM,
-                            partNumberDieNo = cipUpdate.partNumberDieNo,
-                            planDate = cipUpdate.planDate,
-                            processDie = cipUpdate.processDie,
-                            reasonDiff = cipUpdate.reasonDiff,
-                            reasonForDelay = cipUpdate.reasonForDelay,
-                            remark = cipUpdate.remark,
-                            result = cipUpdate.result,
-                            serialNo = cipUpdate.serialNo,
-                            tranferToSupplier = cipUpdate.tranferToSupplier,
-                            upFixAsset = cipUpdate.upFixAsset,
+                            db.CIP_UPDATE_REJECT.Add(
+                                                    new cipUpdateRejectSchema
+                                                    {
+                                                        actDate = cipUpdate.actDate,
+                                                        addCipBfmNo = cipUpdate.addCipBfmNo,
+                                                        boiType = cipUpdate.boiType,
+                                                        cipSchemaid = cipUpdate.cipSchemaid,
+                                                        classFixedAsset = cipUpdate.classFixedAsset,
+                                                        commend = body.commend,
+                                                        costCenterOfUser = cipUpdate.costCenterOfUser,
+                                                        createDate = DateTime.Now.ToString("yyyy/MM/dd"),
+                                                        fixAssetName = cipUpdate.fixAssetName,
+                                                        fixedAssetCode = cipUpdate.fixedAssetCode,
+                                                        model = cipUpdate.model,
+                                                        newBFMorAddBFM = cipUpdate.newBFMorAddBFM,
+                                                        partNumberDieNo = cipUpdate.partNumberDieNo,
+                                                        planDate = cipUpdate.planDate,
+                                                        processDie = cipUpdate.processDie,
+                                                        reasonDiff = cipUpdate.reasonDiff,
+                                                        reasonForDelay = cipUpdate.reasonForDelay,
+                                                        remark = cipUpdate.remark,
+                                                        result = cipUpdate.result,
+                                                        serialNo = cipUpdate.serialNo,
+                                                        tranferToSupplier = cipUpdate.tranferToSupplier,
+                                                        upFixAsset = cipUpdate.upFixAsset,
+                                                    }
+                                                );
+                            db.CIP_UPDATE.Remove(cipUpdate);
                         }
-                    );
-                    db.CIP_UPDATE.Remove(cipUpdate);
 
-                    List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == Int32.Parse(id)).ToList();
-                    db.APPROVAL.RemoveRange(approve);
-
+                        List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == id).ToList();
+                        db.APPROVAL.RemoveRange(approve);
+                    }
                     db.SaveChanges();
                 }
 

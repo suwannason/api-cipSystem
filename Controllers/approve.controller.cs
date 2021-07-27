@@ -117,26 +117,30 @@ namespace cip_api.controllers
                 PermissionSchema preparer = permissions.Find(e => e.action == "prepare");
 
                 PermissionSchema checker = permissions.Find(e => e.action == "checker");
+
                 List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
 
                 string message = "";
-                List<cipSchema> data = new List<cipSchema>();
-                if (preparer != null)
-                {
-                    message = "CIP for confirm upload";
-                    List<string> multidept = deptCode.Split(',').ToList();
+                string permissions_page = "";
 
+                List<cipSchema> data = new List<cipSchema>();
+                if (approver.Count != 0)
+                {
+                    permissions_page = "approve";
+                    message = "CIP for data approve. (" + deptCode + " )";
+
+                    List<string> multidept = deptCode.Split(',').ToList();
                     if (multidept.Count > 1)
                     {
                         foreach (string code in multidept)
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
                             }
                             else
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
                             }
 
                         }
@@ -145,18 +149,19 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
                         }
                         else
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
                         }
                     }
                 }
                 if (checker != null)
                 {
                     List<string> multidept = deptCode.Split(',').ToList();
-                    message = "CIP for data check.";
+                    message = "CIP for data check. (" + deptCode + " )";
+                    permissions_page = "check";
 
                     if (multidept.Count > 1)
                     {
@@ -186,39 +191,58 @@ namespace cip_api.controllers
                     }
 
                 }
-                if (approver.Count != 0)
-                {
-                    message = "CIP for data approve.";
 
+                if (preparer != null)
+                {
+                    message = "CIP for confirm upload. (" + deptCode + " )";
+                    permissions_page = "prepare";
                     List<string> multidept = deptCode.Split(',').ToList();
+
                     if (multidept.Count > 1)
                     {
                         foreach (string code in multidept)
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
                             }
                             else
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
                             }
 
                         }
                     }
                     else
                     {
-                        Console.WriteLine(deptCode);
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
                         }
                         else
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
                         }
                     }
                 }
+
+                /* Handle message */
+
+                cipSchema draftStatus = data.Find(e => e.status == "draft");
+                cipSchema saveStatus = data.Find(e => e.status == "save");
+
+                if (draftStatus != null && saveStatus != null)
+                {
+                    permissions_page = "prepare";
+                    data = data.FindAll(e => e.status == "draft");
+                }
+                else if (draftStatus == null && saveStatus != null)
+                {
+                    permissions_page = "check";
+                }
+
+                data = data.Distinct().ToList();
+
                 if (user != null)
                 {
                     return Ok(data.Count);
@@ -229,6 +253,7 @@ namespace cip_api.controllers
                       success = true,
                       message,
                       data,
+                      permission = permissions_page,
                   }
               );
             }
@@ -262,39 +287,13 @@ namespace cip_api.controllers
 
             List<cipSchema> data = new List<cipSchema>();
             string message = "";
-            if (checker != null)
-            {
-                List<string> multidept = deptCode.Split(',').ToList();
-                message = "CIP on Cost center check";
+            string permissions_page = "";
 
-                foreach (string dept in multidept)
-                {
-                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
-                    if (dept == "55XX")
-                    {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
-                    }
-                    else
-                    {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
-                    }
-
-                    foreach (cipUpdateSchema cip_update in cipUpdate)
-                    {
-                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cost-prepared").FirstOrDefault();
-                        if (dataItem != null)
-                        {
-                            data.Add(dataItem);
-                        }
-                    }
-                }
-
-            }
             if (approver != null)
             {
                 List<string> multidept = deptCode.Split(',').ToList();
-                message = "CIP on Cost center approve";
-
+                message = "CIP on Cost center approve. (" + deptCode + " )";
+                permissions_page = "approve";
                 foreach (string dept in multidept)
                 {
                     List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
@@ -319,10 +318,41 @@ namespace cip_api.controllers
                 }
 
             }
+            if (checker != null)
+            {
+                List<string> multidept = deptCode.Split(',').ToList();
+                message = "CIP on Cost center check. (" + deptCode + " )";
+                permissions_page = "check";
+
+                foreach (string dept in multidept)
+                {
+                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                    if (dept == "55XX")
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                    }
+                    else
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                    }
+
+                    foreach (cipUpdateSchema cip_update in cipUpdate)
+                    {
+                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cost-prepared").FirstOrDefault();
+                        if (dataItem != null)
+                        {
+                            data.Add(dataItem);
+                        }
+                    }
+                }
+
+            }
+
             if (prepare != null)
             {
                 List<string> multidept = deptCode.Split(',').ToList();
-                message = "CIP on Cost center prepare";
+                message = "CIP on Cost center prepare. (" + deptCode + " )";
+                permissions_page = "prepare";
 
                 foreach (string dept in multidept)
                 {
@@ -346,11 +376,27 @@ namespace cip_api.controllers
                     }
                 }
             }
+            /* Handle message */
+
+            cipSchema draftStatus = data.Find(e => e.status == "draft");
+            cipSchema saveStatus = data.Find(e => e.status == "save");
+
+            if (draftStatus != null && saveStatus != null)
+            {
+                permissions_page = "prepare";
+                data = data.FindAll(e => e.status == "draft");
+            }
+            else if (draftStatus == null && saveStatus != null)
+            {
+                permissions_page = "check";
+            }
+
+            data = data.Distinct().ToList();
             if (user != null)
             {
                 return Ok(data.Count);
             }
-            return Ok(new { success = true, message, data, });
+            return Ok(new { success = true, message, data, permission = permissions_page, });
         }
 
         [HttpPut("approve/cc")]
@@ -1052,9 +1098,9 @@ namespace cip_api.controllers
                         newOrAddBFM.Formula.Values.Add("Add BFM");
                         newOrAddBFM.Formula.Values.Add("NEW BFM");
 
-                        worksheet.Cells["AF" + row].Formula = "=+IF(AH" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AH" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AH" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AH" + row + ",2),\"OK\",\"NG\")))))";
+                        worksheet.Cells["AF" + row].Formula = "=+IF(AI" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AI" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AI" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AI" + row + ",2),\"OK\",\"NG\")))))";
                         worksheet.Cells["AF" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
-                        worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI" + row + ",2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
+                        worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI3,2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
                         worksheet.Cells["AH" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
 
                         // set pink row space

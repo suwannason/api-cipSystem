@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using System;
+using System.IO;
+using OfficeOpenXml;
 
 namespace cip_api.controllers
 {
@@ -219,5 +221,111 @@ namespace cip_api.controllers
                 data,
             });
         }
+
+        [HttpPost("prepare/change"), Consumes("multipart/form-data")]
+        public ActionResult requesterEdit([FromForm] CIPupload body)
+        {
+            try
+            {
+
+                string rootFolder = Directory.GetCurrentDirectory();
+                string pathString2 = @"\API site\files\CIP-system\upload\";
+                string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
+
+                if (!Directory.Exists(serverPath))
+                {
+                    Directory.CreateDirectory(serverPath);
+                }
+                string deptCode = User.FindFirst("deptCode").Value;
+                string username = User.FindFirst("username")?.Value;
+                string fileName = System.Guid.NewGuid().ToString() + "-" + body.file.FileName;
+                FileStream strem = System.IO.File.Create($"{serverPath}{fileName}");
+                body.file.CopyTo(strem);
+                strem.Close();
+
+                string path = $"{serverPath}{fileName}";
+                FileInfo Existfile = new FileInfo(path);
+
+                List<cipUpdateSchema> updateItem = new List<cipUpdateSchema>();
+
+
+                using (ExcelPackage excel = new ExcelPackage(Existfile))
+                {
+                    ExcelWorkbook workbook = excel.Workbook;
+                    ExcelWorksheet sheet = workbook.Worksheets[0];
+
+                    int colCount = sheet.Dimension.End.Column;
+                    int rowCount = sheet.Dimension.End.Row;
+
+                    for (int row = 3; row <= rowCount; row += 1)
+                    {
+                        cipUpdateSchema item = new cipUpdateSchema();
+                        string cipNo = sheet.Cells[row, 3].Value?.ToString();
+                        string subCipNo = sheet.Cells[row, 4].Value?.ToString();
+
+                        for (int col = 3; col <= colCount; col += 1)
+                        {
+                            string value = sheet.Cells[row, col].Value?.ToString();
+                            if (value == null)
+                            {
+                                value = "-";
+                            }
+                            switch (col)
+                            {
+                                case 3:
+                                    if (value == "-")
+                                    {
+                                        break;
+                                    }
+                                    break;
+
+                                case 30: item.planDate = value; break;
+                                case 31: item.actDate = value; break;
+                                case 32: item.result = value; break;
+                                case 33: item.reasonDiff = value; break;
+                                case 34: item.fixedAssetCode = value; break;
+                                case 35: item.classFixedAsset = value; break;
+                                case 36:
+                                    if (value.IndexOf(',') != -1 || value.IndexOf(':') != -1
+                                        || value.IndexOf('"') != -1 || value.IndexOf('#') != -1
+                                        || value.IndexOf('!') != -1 || value.IndexOf('*') != -1 || value.Length > 100)
+                                    {
+                                        return BadRequest(new { success = false, message = "Not allow Symbol fix asset name value." });
+                                    }
+                                    item.fixAssetName = value;
+                                    break;
+                                case 37: item.serialNo = value; break;
+                                case 38: item.partNumberDieNo = value; break;
+                                case 39: item.processDie = value; break;
+                                case 40: item.model = value; break;
+                                case 41: item.costCenterOfUser = value; break;
+                                case 42: item.tranferToSupplier = value; break;
+                                case 43: item.upFixAsset = value; break;
+                                case 44: item.newBFMorAddBFM = value; break;
+                                case 45: item.reasonForDelay = value; break;
+                                case 46: item.addCipBfmNo = value; break;
+                                case 47: item.remark = value; break;
+                                case 48: item.boiType = value; break;
+                            }
+                        }
+                        cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == cipNo && item.subCipNo == subCipNo).FirstOrDefault();
+                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == data.id).FirstOrDefault();
+                        item.status = cipUpdate.status;
+                        item.createDate = cipUpdate.createDate;
+                        cipUpdate = item;
+                        cipUpdate.cipSchemaid = data.id;
+                        updateItem.Add(cipUpdate);
+                    }
+                    db.CIP_UPDATE.UpdateRange(updateItem);
+                    db.SaveChanges();
+                }
+                return Ok(new { success = true, message = "Update data confirm " + updateItem.Count + " success." });
+            }
+            catch (Exception e)
+            {
+                return Problem(e.StackTrace);
+            }
+        }
+
     }
 }

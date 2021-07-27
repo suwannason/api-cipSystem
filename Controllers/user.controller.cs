@@ -407,5 +407,17 @@ namespace cip_api.controllers
             }
 
         }
+    
+        [HttpGet("profile/{empNo}"), AllowAnonymous]
+        public ActionResult getProfile(string empNo) {
+
+            try {
+                userSchema data = db.USERS.Find(empNo);
+
+                return Ok(new { success = true, message = "User profile", data, });
+            } catch (Exception e) {
+                return Problem(e.StackTrace);
+            }
+        }
     }
 }
