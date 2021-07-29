@@ -28,3 +28,17 @@ public class Profile {
     public string divShortName { get; set; }
     public string band { get; set; }
 }
+
+public class HRMSResponse {
+    public bool success { get; set; }
+    public HRMSProfile[] data { get; set; }
+}
+
+public class HRMSProfile {
+    public string EMP_NO { get; set; }
+    public string SNAME_ENG { get; set; }
+    public string GNAME_ENG { get; set; }
+    public string FNAME_ENG { get; set; }
+    public string DEPT_ABB_NAME { get; set; }
+    public string DEPT_CODE { get; set; }
+}

@@ -41,44 +41,6 @@ namespace cip_api.controllers
             }
 
         }
-        private void createNotification(string currentAction, string username, string deptCode)
-        {
-
-            List<PermissionSchema> users = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode == deptCode).ToList();
-
-            List<PermissionSchema> createTo = new List<PermissionSchema>();
-
-            string message = ""; string title = "";
-
-            if (currentAction == "save")
-            { // cc prepared CIP success
-                createTo = users.FindAll(e => e.action == "checker");
-                message = "CIP prepared on " + DateTime.Now.ToString("yyyy/MM/dd HH:mm");
-                title = "Checking request";
-            }
-            else if (currentAction == "cc-checked")
-            {
-                createTo = users.FindAll(e => e.action == "approver");
-                message = "CIP checked on " + DateTime.Now.ToString("yyyy/MM/dd HH:mm");
-                title = "Approving request";
-            }
-
-            List<NotificationSchema> notifications = new List<NotificationSchema>();
-
-            Int32 cipCount = db.CIP.Count<cipSchema>(item => deptCode.IndexOf(item.cc) != -1 && item.status == currentAction);
-            foreach (PermissionSchema item in createTo)
-            {
-                notifications.Add(new NotificationSchema
-                {
-                    createDate = DateTime.Now.ToString("yyyy/MM/dd"),
-                    message = message,
-                    title = title,
-                    status = "created",
-                    userSchemaempNo = item.empNo,
-                });
-            }
-            db.NOTIFICATIONS.AddRange(notifications);
-        }
 
         [HttpGet("draft")]
         public ActionResult draft()
@@ -157,6 +119,39 @@ namespace cip_api.controllers
                         }
                     }
                 }
+                if (preparer != null)
+                {
+                    message = "CIP for confirm upload. (" + deptCode + " )";
+                    permissions_page = "prepare";
+                    List<string> multidept = deptCode.Split(',').ToList();
+
+                    if (multidept.Count > 1)
+                    {
+                        foreach (string code in multidept)
+                        {
+                            if (code == "55XX")
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            }
+                            else
+                            {
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
+                            }
+
+                        }
+                    }
+                    else
+                    {
+                        if (deptCode == "55XX")
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                        }
+                        else
+                        {
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
+                        }
+                    }
+                }
                 if (checker != null)
                 {
                     List<string> multidept = deptCode.Split(',').ToList();
@@ -190,40 +185,6 @@ namespace cip_api.controllers
                         }
                     }
 
-                }
-
-                if (preparer != null)
-                {
-                    message = "CIP for confirm upload. (" + deptCode + " )";
-                    permissions_page = "prepare";
-                    List<string> multidept = deptCode.Split(',').ToList();
-
-                    if (multidept.Count > 1)
-                    {
-                        foreach (string code in multidept)
-                        {
-                            if (code == "55XX")
-                            {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
-                            }
-                            else
-                            {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(code) != -1).ToList<cipSchema>());
-                            }
-
-                        }
-                    }
-                    else
-                    {
-                        if (deptCode == "55XX")
-                        {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
-                        }
-                        else
-                        {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf(deptCode) != -1).ToList<cipSchema>());
-                        }
-                    }
                 }
 
                 /* Handle message */
@@ -318,6 +279,34 @@ namespace cip_api.controllers
                 }
 
             }
+            if (prepare != null)
+            {
+                List<string> multidept = deptCode.Split(',').ToList();
+                message = "CIP on Cost center prepare. (" + deptCode + " )";
+                permissions_page = "prepare";
+
+                foreach (string dept in multidept)
+                {
+                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                    if (dept == "55XX")
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                    }
+                    else
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                    }
+
+                    foreach (cipUpdateSchema cip_update in cipUpdate)
+                    {
+                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cc-approved").FirstOrDefault();
+                        if (dataItem != null)
+                        {
+                            data.Add(dataItem);
+                        }
+                    }
+                }
+            }
             if (checker != null)
             {
                 List<string> multidept = deptCode.Split(',').ToList();
@@ -348,34 +337,7 @@ namespace cip_api.controllers
 
             }
 
-            if (prepare != null)
-            {
-                List<string> multidept = deptCode.Split(',').ToList();
-                message = "CIP on Cost center prepare. (" + deptCode + " )";
-                permissions_page = "prepare";
 
-                foreach (string dept in multidept)
-                {
-                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
-                    if (dept == "55XX")
-                    {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
-                    }
-                    else
-                    {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
-                    }
-
-                    foreach (cipUpdateSchema cip_update in cipUpdate)
-                    {
-                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cc-approved").FirstOrDefault();
-                        if (dataItem != null)
-                        {
-                            data.Add(dataItem);
-                        }
-                    }
-                }
-            }
             /* Handle message */
 
             cipSchema draftStatus = data.Find(e => e.status == "draft");

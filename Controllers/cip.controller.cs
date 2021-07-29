@@ -300,7 +300,6 @@ namespace cip_api.controllers
             }
             string deptCode = User.FindFirst("deptCode")?.Value;
 
-            Console.WriteLine(deptCode);
             List<cipSchema> returnData = new List<cipSchema>();
 
             List<string> multidept = deptCode.Split(',').ToList();
@@ -554,7 +553,7 @@ namespace cip_api.controllers
         }
 
         [HttpPost("reject/requester")]
-        public ActionResult rejectCip(rejectCip body)
+        public ActionResult rejectRequester(rejectCip body)
         {
             try
             {
@@ -614,7 +613,65 @@ namespace cip_api.controllers
                 return Problem(e.StackTrace);
             }
         }
-        [HttpPost("test")]
+
+        [HttpPost("reject/user")]
+        public ActionResult rejectUser(rejectCostCenter body)
+        {
+            try
+            {
+                foreach (Int32 id in body.id)
+                {
+
+                }
+                return Ok();
+            }
+            catch (System.Exception e)
+            {
+                return Problem(e.StackTrace);
+            }
+        }
+
+        [HttpPut]
+        public ActionResult updateCip(editCip body)
+        {
+            cipSchema cip = db.CIP.Find(body.id);
+
+            cip.cipNo = body.cipNo;
+            cip.subCipNo = body.subCipNo;
+            cip.acqDate = body.acqDate;
+            cip.averageFreight = body.averageFreight;
+            cip.averageInsurance = body.averageInsurance;
+            cip.budgetCode = body.budgetCode;
+            cip.cc = body.cc;
+            cip.cur = body.cur;
+            cip.exRate = body.exRate;
+            cip.invDate = body.invDate;
+            cip.invNo = body.invNo;
+            cip.model = body.model;
+            cip.name = body.name;
+            cip.partNoDieNo = body.partNoDieNo;
+            cip.perUnit = body.perUnit;
+            cip.perUnitThb = body.perUnitThb;
+            cip.poNo = body.poNo;
+            cip.prDieJig = body.prDieJig;
+            cip.projectNo = body.projectNo;
+            cip.qty = body.qty;
+            cip.receivedDate = body.receivedDate;
+            cip.totalJpy = body.totalJpy;
+            cip.totalJpy_1 = body.totalJpy_1;
+            cip.totalOfCip = body.totalOfCip;
+            cip.totalThb = body.totalThb;
+            cip.totalThb_1 = body.totalThb_1;
+            cip.vendor = body.vendor;
+            cip.vendorCode = body.vendorCode;
+            cip.workType = body.workType;
+
+            db.CIP.Update(cip);
+            db.SaveChanges();
+            return Ok(new { success = true, message = "Update cip success." });
+        }
+
+        [HttpPost("testSendMail")]
         public async Task<ActionResult> test()
         {
             try

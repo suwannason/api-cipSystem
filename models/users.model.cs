@@ -29,6 +29,5 @@ namespace cip_api.models
         public string deptShortName { get; set;}
         [Column(TypeName="nvarchar"), StringLength(35)]
         public string name { get; set; }
-        public ICollection<NotificationSchema> nitification { get; set; }
     }
 }

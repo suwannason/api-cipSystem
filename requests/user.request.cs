@@ -27,13 +27,33 @@ namespace cip_api.request.user
         public string DEPT_ABB_NAME { get; set; }
         public string DIV_NAME_WC { get; set; }
     }
-    public class Upload {
+    public class Upload
+    {
 
-        public Microsoft.AspNetCore.Http.IFormFile file { get; set;}
+        public Microsoft.AspNetCore.Http.IFormFile file { get; set; }
     }
 
-    public class ProfileUser {
+    public class ProfileUser
+    {
         public string username { get; set; }
         public string deptCode { get; set; }
+    }
+
+    public class createUser
+    {
+        [Required]
+        public string empNo { get; set; }
+        public string permission { get; set; }
+        public string action { get; set; }
+    }
+
+    public class updateUser
+    {
+        public string oldEmpNo { get; set; }
+        public string newEmpNo { get; set; }
+        public string oldPremission { get; set; }
+        public string newPremission { get; set; }
+        public string oldAction { get; set; }
+        public string newAction { get; set; }
     }
 }

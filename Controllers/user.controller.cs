@@ -112,10 +112,12 @@ namespace cip_api.controllers
             List<PermissionSchema> permissions = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == body.username).ToList();
             string deptcode = "";
 
-            for (int i = 0; i < permissions.Count; i += 1) {
+            for (int i = 0; i < permissions.Count; i += 1)
+            {
                 deptcode += permissions[i].deptCode;
 
-                if (i < permissions.Count - 1) {
+                if (i < permissions.Count - 1)
+                {
                     deptcode += ",";
                 }
             }
@@ -407,17 +409,174 @@ namespace cip_api.controllers
             }
 
         }
-    
-        [HttpGet("profile/{empNo}"), AllowAnonymous]
-        public ActionResult getProfile(string empNo) {
 
-            try {
+        [HttpGet("profile/{empNo}"), AllowAnonymous]
+        public ActionResult getProfile(string empNo)
+        {
+
+            try
+            {
                 userSchema data = db.USERS.Find(empNo);
 
                 return Ok(new { success = true, message = "User profile", data, });
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 return Problem(e.StackTrace);
             }
+        }
+
+        [HttpGet("manage")]
+        public ActionResult getManagement()
+        {
+            try
+            {
+                List<userSchema> users = db.USERS.ToList();
+                List<PermissionSchema> permession = db.PERMISSIONS.ToList();
+
+                List<dynamic> returnData = new List<dynamic>();
+
+                foreach (PermissionSchema item in permession)
+                {
+                    userSchema userDetail = users.Find(e => e.empNo == item.empNo);
+                    returnData.Add(new
+                    {
+                        empNo = item.empNo,
+                        name = userDetail.name,
+                        deptCode = item.deptCode,
+                        deptName = userDetail.deptShortName,
+                        action = item.action,
+                    });
+                }
+
+                return Ok(new { success = true, message = "All system user", data = returnData });
+            }
+            catch (System.Exception e)
+            {
+
+                return Problem(e.StackTrace);
+            }
+        }
+
+        [HttpPut("manage")]
+        public ActionResult updateUser(updateUser body)
+        {
+
+            PermissionSchema permission = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode == body.oldPremission && item.action == body.oldAction && item.empNo == body.oldEmpNo).FirstOrDefault();
+
+            if (body.newEmpNo != body.oldEmpNo)
+            {
+                db.Remove(permission);
+                db.PERMISSIONS.Add(new PermissionSchema
+                {
+                    action = body.newAction,
+                    deptCode = body.newPremission,
+                    empNo = body.newEmpNo,
+                    deptShortName = permission.deptShortName,
+                });
+            }
+            else
+            {
+                permission.empNo = body.newEmpNo;
+                permission.action = body.newAction;
+                permission.deptCode = body.newPremission;
+
+                db.Update(permission);
+            }
+
+            db.SaveChanges();
+
+            return Ok(new { success = true, message = "Update user success." });
+        }
+        [HttpDelete("manage/{id}")]
+        public ActionResult deleteUser(string id)
+        {
+            userSchema user = db.USERS.Find(id);
+            List<PermissionSchema> permission = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == id).ToList();
+
+            if (user != null)
+            {
+                db.USERS.Remove(user);
+            }
+
+            if (permission.Count > 0)
+            {
+                db.PERMISSIONS.RemoveRange(permission);
+            }
+            db.SaveChanges();
+            return Ok(new { success = true, message = "Delete user success." });
+        }
+        [HttpPost("manage/create")]
+        public async Task<ActionResult> create(createUser body)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string request = "{\"command\": \"SELECT EMP_NO, SNAME_ENG, GNAME_ENG, FNAME_ENG, DEPT_ABB_NAME, DEPT_CODE FROM ADMIN.V_EMP_DATA_ALL_CPT where emp_no = '" + body.empNo + "'\"}";
+                    HttpContent content = new StringContent(request, Encoding.UTF8, "application/json");
+                    client.Timeout = TimeSpan.FromSeconds(15);
+
+                    HttpResponseMessage response = client.PostAsync(GLOBAL_API_ENDPOINT + "/middleware/oracle/hrms", content).Result;
+                    HRMSResponse data = JsonConvert.DeserializeObject<HRMSResponse>(await response.Content.ReadAsStringAsync());
+
+                    if (data.data.Length == 0)
+                    {
+                        return BadRequest(new { success = false, message = "Employee no invalid." });
+                    }
+                    userSchema user = new userSchema
+                    {
+                        deptCode = data.data[0].DEPT_CODE,
+                        deptShortName = data.data[0].DEPT_ABB_NAME,
+                        empNo = data.data[0].EMP_NO,
+                        name = data.data[0].GNAME_ENG + " " + data.data[0].FNAME_ENG
+                    };
+                    userSchema userDB = db.USERS.Find(user.empNo);
+                    if (userDB == null)
+                    {
+                        db.USERS.Add(user);
+                    }
+
+                    db.PERMISSIONS.Add(new PermissionSchema
+                    {
+                        action = body.action,
+                        deptCode = body.permission,
+                        deptShortName = user.deptShortName,
+                        empNo = user.empNo,
+                    });
+
+                    db.SaveChanges();
+
+                    return Ok(new { success = true, message = "Create user success." });
+                }
+            }
+            catch (Exception e)
+            {
+                return Problem(e.StackTrace);
+            }
+            // return Ok();
+        }
+
+        [HttpGet("verify/permission")]
+        public ActionResult verifyUser()
+        {
+            string username = User.FindFirst("username")?.Value;
+            string deptCode = User.FindFirst("deptCode")?.Value;
+            string dept = User.FindFirst("dept")?.Value;
+            string name = User.FindFirst("name")?.Value;
+
+            return Ok(new
+            {
+                success = true,
+                message = "User token verify",
+                data = new
+                {
+                    username,
+                    deptCode,
+                    dept,
+                    name,
+                }
+            });
         }
     }
 }
