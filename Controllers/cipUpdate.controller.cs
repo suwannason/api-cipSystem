@@ -23,6 +23,66 @@ namespace cip_api.controllers
         {
             db = _db;
         }
+        
+        [HttpPut]
+        public ActionResult update(cipUpdateEdit body) {
+            cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(body.id)).FirstOrDefault();
+
+            if (cipUpdate == null) {
+                db.CIP_UPDATE.Add(
+                    new cipUpdateSchema {
+                        actDate = body.actDate,
+                        addCipBfmNo = body.addCipBfmNo,
+                        boiType = "-",
+                        cipSchemaid = Int32.Parse(body.id),
+                        classFixedAsset = body.classFixedAsset,
+                        costCenterOfUser = body.costCenterOfUser,
+                        createDate = DateTime.Now.ToString("yyyy/MM/dd"),
+                        fixAssetName = body.fixAssetName,
+                        fixedAssetCode = body.fixedAssetCode,
+                        model = body.model,
+                        newBFMorAddBFM = body.newBFMorAddBFM,
+                        partNumberDieNo = body.partNumberDieNo,
+                        planDate = body.planDate,
+                        processDie = body.processDie,
+                        reasonDiff = body.reasonDiff,
+                        reasonForDelay = body.reasonForDelay,
+                        remark = body.remark,
+                        result = body.result,
+                        serialNo = body.serialNo,
+                        status = "active",
+                        tranferToSupplier = body.tranferToSupplier,
+                        upFixAsset = body.upFixAsset,
+                    }
+                );
+                db.SaveChanges();
+
+                return Ok(new { success = true, message = "Confirm CIP success." });
+            }
+            cipUpdate.actDate = body.actDate;
+            cipUpdate.addCipBfmNo = body.addCipBfmNo;
+            cipUpdate.boiType = body.boiType;
+            cipUpdate.classFixedAsset = body.classFixedAsset;
+            cipUpdate.costCenterOfUser = body.costCenterOfUser;
+            cipUpdate.fixAssetName = body.fixAssetName;
+            cipUpdate.fixedAssetCode = body.fixedAssetCode;
+            cipUpdate.model = body.model;
+            cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
+            cipUpdate.partNumberDieNo = body.partNumberDieNo;
+            cipUpdate.planDate = body.planDate;
+            cipUpdate.processDie = body.processDie;
+            cipUpdate.reasonDiff = body.reasonDiff;
+            cipUpdate.reasonForDelay = body.reasonForDelay;
+            cipUpdate.remark = body.remark;
+            cipUpdate.result = body.result;
+            cipUpdate.serialNo = body.serialNo;
+            cipUpdate.tranferToSupplier = body.tranferToSupplier;
+            cipUpdate.upFixAsset = body.upFixAsset;
+
+            db.CIP_UPDATE.Update(cipUpdate);
+            db.SaveChanges();
+            return Ok(new { success = true, message = "Update CIP success." });
+        }
 
         [HttpPost("draft")]
         public ActionResult draft(cipUpdate body)

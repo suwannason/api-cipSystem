@@ -88,8 +88,12 @@ namespace cip_api.controllers
 
                 List<cipSchema> excelData = new List<cipSchema>();
                 string dateNow = DateTime.Now.ToString("yyyy/MM/dd");
-                if (User.FindFirst("dept").Value.ToLower() == "acc")
+                if (body.type == "Accounting")
                 {
+                    if (User.FindFirst("dept").Value.ToLower() != "acc")
+                    {
+                        return BadRequest(new { success = false, message = "Access denied." });
+                    }
                     using (ExcelPackage excel = new ExcelPackage(Existfile))
                     {
                         ExcelWorkbook workbook = excel.Workbook;
@@ -282,7 +286,7 @@ namespace cip_api.controllers
             catch (System.Exception e)
             {
                 Console.WriteLine(e.Source);
-                return Problem(e.StackTrace);
+                return Problem(e.Message);
             }
         }
 
@@ -292,9 +296,9 @@ namespace cip_api.controllers
             List<cipSchema> data = new List<cipSchema>();
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
-                data = db.CIP.Where<cipSchema>(item => item.status == "open")
+                data = db.CIP.Where<cipSchema>(item => item.status != "finished")
                .Select(fields =>
-               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id, status = fields.status })
+               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id, status = fields.status, totalThb_1 = fields.totalThb_1, totalOfCip = fields.totalOfCip })
                .ToList<cipSchema>();
                 return Ok(new { success = true, data, });
             }
@@ -305,23 +309,48 @@ namespace cip_api.controllers
             List<string> multidept = deptCode.Split(',').ToList();
             foreach (string code in multidept)
             {
-
-                data = db.CIP.Where<cipSchema>(item => (item.status == "open" || item.status == "reject") && item.cc == code)
-                   .Select(fields =>
-                   new cipSchema
-                   {
-                       cipNo = fields.cipNo,
-                       subCipNo = fields.subCipNo,
-                       vendor = fields.vendor,
-                       name = fields.name,
-                       qty = fields.qty,
-                       totalThb = fields.totalThb,
-                       cc = fields.cc,
-                       status = fields.status,
-                       id = fields.id,
-                       commend = fields.commend,
-                   })
-                   .ToList<cipSchema>();
+                if (code != "55XX")
+                {
+                    data = db.CIP.Where<cipSchema>(item => (item.status != "finished") && item.cc == code)
+                       .Select(fields =>
+                       new cipSchema
+                       {
+                           cipNo = fields.cipNo,
+                           subCipNo = fields.subCipNo,
+                           vendor = fields.vendor,
+                           name = fields.name,
+                           totalThb_1 = fields.totalThb_1,
+                           qty = fields.qty,
+                           totalThb = fields.totalThb,
+                           cc = fields.cc,
+                           status = fields.status,
+                           id = fields.id,
+                           commend = fields.commend,
+                           totalOfCip = fields.totalOfCip,
+                       })
+                       .ToList<cipSchema>();
+                }
+                else
+                { // 55XX
+                    data = db.CIP.Where<cipSchema>(item => (item.status != "finished") && item.cc.IndexOf("55") != -1)
+                                           .Select(fields =>
+                                           new cipSchema
+                                           {
+                                               cipNo = fields.cipNo,
+                                               subCipNo = fields.subCipNo,
+                                               vendor = fields.vendor,
+                                               name = fields.name,
+                                               totalThb_1 = fields.totalThb_1,
+                                               qty = fields.qty,
+                                               totalThb = fields.totalThb,
+                                               cc = fields.cc,
+                                               status = fields.status,
+                                               id = fields.id,
+                                               commend = fields.commend,
+                                               totalOfCip = fields.totalOfCip,
+                                           })
+                                           .ToList<cipSchema>();
+                }
 
                 returnData.AddRange(data);
             }
@@ -377,6 +406,7 @@ namespace cip_api.controllers
                     foreach (int id in body.id)
                     {
                         cipSchema item = db.CIP.Find(id);
+                        db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == id).FirstOrDefault();
                         data.Add(item);
                     }
                 }
@@ -389,9 +419,9 @@ namespace cip_api.controllers
                     List<string[]> header = new List<string[]>()
                 {
                     new string[] { "Type work", "Project No.", "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
-                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (THB/JPY/USD)",
+                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (JPY/USD)",
                     "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
-                    "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model", "PART No./DIE No.",
+                    "Grand TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model", "PART No./DIE No.",
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
                     "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",
@@ -466,6 +496,8 @@ namespace cip_api.controllers
                     int row = 3;
                     foreach (cipSchema item in data)
                     {
+
+
                         List<string[]> cellData = new List<string[]>()
                     {
                         new string [] {
@@ -473,7 +505,12 @@ namespace cip_api.controllers
                             item.cipNo, item.subCipNo, item.poNo ,item.vendorCode, item.vendor, item.acqDate, item.invDate, item.receivedDate,
                              item.invNo, item.name, item.qty, item.exRate, item.cur, item.perUnit, item.totalJpy, item.totalThb, item.averageFreight,
                              item.averageInsurance, item.totalJpy_1, item.totalThb_1, item.perUnitThb, item.cc, item.totalOfCip, item.budgetCode, item.prDieJig,
-                             item.model, item.partNoDieNo
+                             item.model, item.partNoDieNo,
+                             item.cipUpdate?.planDate, item.cipUpdate?.actDate, item.cipUpdate?.result, item.cipUpdate?.reasonDiff, item.cipUpdate?.fixedAssetCode,
+                             item.cipUpdate?.classFixedAsset, item.cipUpdate?.fixAssetName, item.cipUpdate?.serialNo, item.cipUpdate?.partNumberDieNo,
+                             item.cipUpdate?.processDie, item.cipUpdate?.model, item.cipUpdate?.costCenterOfUser, item.cipUpdate?.tranferToSupplier,
+                             item.cipUpdate?.upFixAsset, item.cipUpdate?.newBFMorAddBFM, item.cipUpdate?.reasonForDelay,
+                             item.cipUpdate?.addCipBfmNo, item.cipUpdate?.remark, item.cipUpdate?.boiType
                         }
 
                     };
@@ -619,11 +656,57 @@ namespace cip_api.controllers
         {
             try
             {
+                List<cipUpdateRejectSchema> rejectHistory = new List<cipUpdateRejectSchema>();
+                List<cipSchema> updateCip = new List<cipSchema>();
+                List<ApprovalSchema> removeApproveHistory = new List<ApprovalSchema>();
                 foreach (Int32 id in body.id)
                 {
+                    cipSchema cip = db.CIP.Find(id);
+                    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == id).FirstOrDefault();
 
+                    // Remove approve history
+                    List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
+                                                   item.id == id && (item.onApproveStep == "cost-checked" || item.onApproveStep == "cost-prepared")).ToList();
+                    removeApproveHistory.AddRange(approve);
+                    // db.APPROVAL.RemoveRange(approve);
+                    // Remove approve history
+
+                    rejectHistory.Add(new cipUpdateRejectSchema
+                    {
+                        actDate = cip.cipUpdate.actDate,
+                        addCipBfmNo = cip.cipUpdate.addCipBfmNo,
+                        boiType = cip.cipUpdate.boiType,
+                        cipSchemaid = cip.cipUpdate.cipSchemaid,
+                        classFixedAsset = cip.cipUpdate.classFixedAsset,
+                        commend = body.commend,
+                        costCenterOfUser = cip.cipUpdate.costCenterOfUser,
+                        createDate = DateTime.Now.ToString("yyyy/MM/dd"),
+                        fixAssetName = cip.cipUpdate.fixAssetName,
+                        fixedAssetCode = cip.cipUpdate.fixedAssetCode,
+                        model = cip.cipUpdate.model,
+                        newBFMorAddBFM = cip.cipUpdate.newBFMorAddBFM,
+                        partNumberDieNo = cip.cipUpdate.partNumberDieNo,
+                        planDate = cip.cipUpdate.planDate,
+                        processDie = cip.cipUpdate.processDie,
+                        reasonDiff = cip.cipUpdate.reasonDiff,
+                        reasonForDelay = cip.cipUpdate.reasonForDelay,
+                        remark = cip.cipUpdate.remark,
+                        result = cip.cipUpdate.result,
+                        serialNo = cip.cipUpdate.serialNo,
+                        tranferToSupplier = cip.cipUpdate.tranferToSupplier,
+                        upFixAsset = cip.cipUpdate.upFixAsset,
+                    });
+                    cip.commend = body.commend;
+                    cip.status = "cc-approved";
+                    updateCip.Add(cip);
                 }
-                return Ok();
+
+                db.APPROVAL.RemoveRange(removeApproveHistory);
+                db.CIP.UpdateRange(updateCip);
+                db.CIP_UPDATE_REJECT.AddRange(rejectHistory);
+                db.SaveChanges();
+
+                return Ok(new { success = true, message = "Reject CIP success. " });
             }
             catch (System.Exception e)
             {
@@ -670,6 +753,30 @@ namespace cip_api.controllers
             db.SaveChanges();
             return Ok(new { success = true, message = "Update cip success." });
         }
+
+        [HttpDelete("{id}")]
+        public ActionResult deleteCip(string id)
+        {
+            cipSchema cip = db.CIP.Find(Int32.Parse(id));
+            cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
+
+            db.CIP.Remove(cip);
+
+            if (cipUpdate != null)
+            {
+                db.CIP_UPDATE.Remove(cipUpdate);
+            }
+            db.SaveChanges();
+
+            return Ok(
+                new
+                {
+                    success = true,
+                    message = "Delete CIP success.",
+                }
+            );
+        }
+
 
         [HttpPost("testSendMail")]
         public async Task<ActionResult> test()

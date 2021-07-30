@@ -378,8 +378,6 @@ namespace cip_api.controllers
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
             List<PermissionSchema> approver = permissions.FindAll(e => e.action == "approver");
 
-
-            Console.WriteLine(username);
             string status = "";
             foreach (string item in body.id)
             {
@@ -394,7 +392,7 @@ namespace cip_api.controllers
                 }
                 else if (checker != null && data.status == "save")
                 {
-                    if ((data.cc == checker.deptCode) && data.status != "cc-checked")
+                    if ((checker.deptCode.IndexOf(data.cc) != -1) && data.status != "cc-checked")
                     {
                         data.status = "cc-checked";
                         status = "cc-checked";
@@ -407,7 +405,7 @@ namespace cip_api.controllers
                 }
                 else if (approver.Count != 0 && data.status == "cc-checked")
                 {
-                    if (deptCode != "55XX")
+                    if (deptCode.IndexOf("55XX") != -1)
                     {
                         PermissionSchema approving = approver.Find(e => e.deptCode == data.cc);
                         if (approving != null)
@@ -956,9 +954,9 @@ namespace cip_api.controllers
                     List<string[]> header = new List<string[]>()
                 {
                     new string[] { "Type work", "Project No.", "CIP No.", "Sub CIP No.", "PO NO.", "VENDER CODE", "VENDER", "ACQ-DATE (ETD)", "INV DATE",
-                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (THB/JPY/USD)",
+                    "RECEIVED DATE", "INV NO.", "NAME (ENGLISH)", "Qty.", "EX.RATE", "CUR", "PER UNIT \n (JPY/USD)",
                     "TOTAL (JPY/USD)", "TOTAL (THB)", "AVERAGE FREIGHT (JPY/USD)", "AVERAGE INSURANCE (JPY/USD)", "TOTAL (JPY/USD)",
-                    "TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model", "PART No./DIE No.",
+                    "Grand TOTAL (THB)", "PER UNIT (THB)", "CC", "TOTAL OF CIP (THB)", "Budget code", "PR.DIE/JIG", "Model", "PART No./DIE No.",
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
                     "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",

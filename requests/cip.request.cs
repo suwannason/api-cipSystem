@@ -2,6 +2,7 @@
 namespace cip_api.request {
     public class CIPupload {
         public Microsoft.AspNetCore.Http.IFormFile file { get; set; }
+        public string type { get; set; }
     }
 
     public class cipDownlode {
@@ -21,7 +22,6 @@ namespace cip_api.request {
     public class rejectCostCenter {
         public System.Int32[] id { get; set; }
         public string commend { get; set; }
-        public string formPage { get; set; }
     }
 
     public class editCip {

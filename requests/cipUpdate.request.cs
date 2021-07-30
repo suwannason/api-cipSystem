@@ -27,4 +27,47 @@ namespace cip_api.request
         public string boiType { get; set; }
         public string remark { get; set; }
     }
+
+
+    public class cipUpdateEdit
+    {
+        public string id { get; set; }
+        [Required]
+        public string planDate { get; set; }
+        [Required]
+        public string actDate { get; set; }
+        [Required]
+        public string result { get; set; }
+        [Required]
+        public string reasonDiff { get; set; }
+        [Required]
+        public string fixedAssetCode { get; set; }
+        [Required]
+        public string classFixedAsset { get; set; }
+        [Required]
+        public string fixAssetName { get; set; }
+        [Required]
+        public string partNumberDieNo { get; set; }
+        [Required]
+        public string serialNo { get; set; }
+        [Required]
+        public string processDie { get; set; }
+        [Required]
+        public string model { get; set; }
+        [Required]
+        public string costCenterOfUser { get; set; }
+        [Required]
+        public string tranferToSupplier { get; set; }
+        [Required]
+        public string upFixAsset { get; set; }
+        [Required]
+        public string newBFMorAddBFM { get; set; }
+        [Required]
+        public string reasonForDelay { get; set; }
+        [Required]
+        public string addCipBfmNo { get; set; }
+        [Required]
+        public string remark { get; set; }
+        public string boiType { get; set; }
+    }
 }

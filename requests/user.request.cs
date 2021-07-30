@@ -45,6 +45,7 @@ namespace cip_api.request.user
         public string empNo { get; set; }
         public string permission { get; set; }
         public string action { get; set; }
+        public string dept { get; set; }
     }
 
     public class updateUser

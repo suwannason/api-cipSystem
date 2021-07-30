@@ -68,11 +68,22 @@ namespace cip_api.controllers
                     }
                     client.Dispose();
 
+                    List<PermissionSchema> permissions = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == body.username).ToList();
+                    string deptcode = "";
+                    for (int i = 0; i < permissions.Count; i += 1)
+                    {
+                        deptcode += permissions[i].deptCode;
+
+                        if (i < permissions.Count - 1)
+                        {
+                            deptcode += ",";
+                        }
+                    }
                     users user = new users
                     {
                         band = data.data.band,
                         dept = data.data.deptShortName,
-                        deptCode = data.data.deptCode,
+                        deptCode = deptcode,
                         div = data.data.divShortName,
                         name = data.data.fnameEn + " " + data.data.lnameEn,
                         empNo = data.data.empNo,
@@ -121,7 +132,6 @@ namespace cip_api.controllers
                     deptcode += ",";
                 }
             }
-            Console.WriteLine(deptcode);
             users user = new users
             {
                 band = null,
@@ -527,7 +537,7 @@ namespace cip_api.controllers
                     userSchema user = new userSchema
                     {
                         deptCode = data.data[0].DEPT_CODE,
-                        deptShortName = data.data[0].DEPT_ABB_NAME,
+                        deptShortName = body.dept.ToUpper(),
                         empNo = data.data[0].EMP_NO,
                         name = data.data[0].GNAME_ENG + " " + data.data[0].FNAME_ENG
                     };
