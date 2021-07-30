@@ -390,7 +390,7 @@ namespace cip_api.controllers
                     data.status = "save";
                     status = "save";
                 }
-                else if (checker != null && data.status == "save")
+                if (checker != null && data.status == "save")
                 {
                     if ((checker.deptCode.IndexOf(data.cc) != -1) && data.status != "cc-checked")
                     {
@@ -403,9 +403,9 @@ namespace cip_api.controllers
                         status = "cc-checked";
                     }
                 }
-                else if (approver.Count != 0 && data.status == "cc-checked")
+                if (approver.Count != 0 && data.status == "cc-checked")
                 {
-                    if (deptCode.IndexOf("55XX") != -1)
+                    if (deptCode.IndexOf("55XX") == -1)
                     {
                         PermissionSchema approving = approver.Find(e => e.deptCode == data.cc);
                         if (approving != null)
