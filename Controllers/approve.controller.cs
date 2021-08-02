@@ -264,7 +264,7 @@ namespace cip_api.controllers
                     }
                     else
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => dept.IndexOf(item.costCenterOfUser) != -1 && item.status == "active").ToList();
                     }
 
                     foreach (cipUpdateSchema cip_update in cipUpdate)
@@ -322,7 +322,7 @@ namespace cip_api.controllers
                     }
                     else
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => dept.IndexOf(item.costCenterOfUser) != -1  && item.status == "active").ToList();
                     }
 
                     foreach (cipUpdateSchema cip_update in cipUpdate)
@@ -521,7 +521,6 @@ namespace cip_api.controllers
 
                     foreach (string deptCodeItem in multidept)
                     {
-                        Console.WriteLine(data.cipUpdate.costCenterOfUser + " === " + deptCodeItem);
                         if (deptCodeItem == "55XX")
                         {
                             status = "cost-checked";
@@ -577,6 +576,9 @@ namespace cip_api.controllers
                 }
                 Console.WriteLine("status: " + status);
                 data.status = status;
+                if (status == "cost-prepared") {
+                    data.commend = null;
+                }
 
                 approve.onApproveStep = status;
                 approve.empNo = username;

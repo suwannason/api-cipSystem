@@ -25,8 +25,8 @@ namespace cip_api.controllers
             _config = config;
         }
 
-        [HttpPost]
-        public ActionResult export(request.ExportACCrequest body)
+        [HttpPost("finished")]
+        public ActionResult getFinishedItems(request.ExportACCrequest body)
         {
             try
             {
@@ -37,11 +37,11 @@ namespace cip_api.controllers
                     return Unauthorized(new { success = false, message = "Permission denied." });
                 }
 
-                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "finished" && item.qty == "1" && item.workType == body.workType).ToList();
-                db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "finished" && (item.newBFMorAddBFM == "NEW BFM" || item.newBFMorAddBFM.ToLower().Trim() == "newbfm")).ToList();
+                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "finished" && item.workType == body.workType).ToList();
+                db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "finished").ToList();
 
                 List<cipSchema> returnData = data.FindAll(item => item.cipUpdate != null);
-                
+
                 return Ok(new { success = true, data = returnData });
 
 
@@ -117,13 +117,86 @@ namespace cip_api.controllers
                 return Problem(e.StackTrace);
             }
         }
-    
-        [HttpPost("excel")]
-        public ActionResult WriteTodept(request.exportToForm body) {
 
-            try {
+        [HttpPost("wrtiing"), AllowAnonymous]
+        public ActionResult WriteTodept(request.exportToForm body)
+        {
+            try
+            {
+                string userfile = @"\\cptfile01\Dept\2310\G. Fixed Assets\Support ICD - CIP system";
+
+                // string userfile = "C:\\Users\\013817\\Desktop";
+                if (body.workType == "Project ENG3")
+                {
+                    userfile += "\\4.ProjectENG3.xlsx";
+                }
+                else if (body.workType == "Domestic-DIE")
+                {
+
+                }
+                else if (body.workType == "Domestic")
+                {
+
+                }
+                else if (body.workType == "Oversea")
+                {
+
+                }
+                else if (body.workType == "Project-MSC")
+                {
+
+                }
+
+                FileInfo Existfile = new FileInfo(userfile);
+
+                using (var package = new ExcelPackage(new FileInfo(userfile)))
+                {
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets["SUM-ACC"];
+                    int rowEnd = worksheet.Dimension.End.Row;
+
+                    List<cipSchema> updateStatus = new List<cipSchema>();
+
+                    foreach (string id in body.id)
+                    {
+                        cipSchema cip = db.CIP.Find(Int32.Parse(id));
+
+                        // 48992
+                        var searchCell = from cell in worksheet.Cells["E1:E" + rowEnd.ToString()] where cell.Value.ToString() == "48992" select cell.Start.Row;
+
+                        cip.status = "exported";
+                        updateStatus.Add(cip);
+                        
+                        string rowNum = searchCell.First().ToString();
+                        Console.WriteLine(rowNum);
+                    }
+
+                }
+
+
+
+                // Console.WriteLine(worksheet.Name);
+                // Console.WriteLine(worksheet.Cells[1,1]?.Value);
+
+                // using (ExcelPackage excel = new ExcelPackage(Existfile))
+                // {
+                //     ExcelWorkbook workbook = excel.Workbook;
+                //                             // workbook.Worksheets[0];
+                //     ExcelWorksheet SUM_ACC = workbook.Worksheets[1];
+
+                //     int rowStart = SUM_ACC.Dimension.Start.Row;
+                //     int rowEnd = SUM_ACC.Dimension.End.Row;
+
+                //     string cellRange = rowStart.ToString() + ":" + rowEnd.ToString();
+
+                //     Console.WriteLine(cellRange);
+
+                // }
                 return Ok();
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine(e.StackTrace);
                 return Problem(e.StackTrace);
             }
         }

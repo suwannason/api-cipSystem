@@ -651,6 +651,19 @@ namespace cip_api.controllers
             }
         }
 
+
+        public void costCenterPrepareRejection(cipSchema cip, string commend)
+        {
+
+            cip.status = "save";
+            cip.commend = commend;
+            db.CIP.Update(cip);
+
+            List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == cip.id && (item.onApproveStep == "cc-approved" || item.onApproveStep == "cc-checked")).ToList();
+            db.APPROVAL.RemoveRange(approve);
+
+        }
+
         [HttpPost("reject/user")]
         public ActionResult rejectUser(rejectCostCenter body)
         {
@@ -659,15 +672,29 @@ namespace cip_api.controllers
                 List<cipUpdateRejectSchema> rejectHistory = new List<cipUpdateRejectSchema>();
                 List<cipSchema> updateCip = new List<cipSchema>();
                 List<ApprovalSchema> removeApproveHistory = new List<ApprovalSchema>();
-                foreach (Int32 id in body.id)
+                foreach (string id in body.id)
                 {
-                    cipSchema cip = db.CIP.Find(id);
-                    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == id).FirstOrDefault();
+                    cipSchema cip = db.CIP.Find(Int32.Parse(id));
+                    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
 
+                    if (cip.status == "cc-approved")
+                    {
+                        costCenterPrepareRejection(cip, body.commend);
+                    }
+                    else
+                    {
+                        List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
+                               item.id == Int32.Parse(id) && (item.onApproveStep == "cost-checked" || item.onApproveStep == "cost-prepared")).ToList();
+                        removeApproveHistory.AddRange(approve);
+                        cip.commend = body.commend;
+                        cip.status = "cc-approved";
+                        updateCip.Add(cip);
+
+                        db.APPROVAL.RemoveRange(removeApproveHistory);
+                        db.CIP.UpdateRange(updateCip);
+                    }
                     // Remove approve history
-                    List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
-                                                   item.id == id && (item.onApproveStep == "cost-checked" || item.onApproveStep == "cost-prepared")).ToList();
-                    removeApproveHistory.AddRange(approve);
+
                     // db.APPROVAL.RemoveRange(approve);
                     // Remove approve history
 
@@ -696,13 +723,8 @@ namespace cip_api.controllers
                         tranferToSupplier = cip.cipUpdate.tranferToSupplier,
                         upFixAsset = cip.cipUpdate.upFixAsset,
                     });
-                    cip.commend = body.commend;
-                    cip.status = "cc-approved";
-                    updateCip.Add(cip);
                 }
 
-                db.APPROVAL.RemoveRange(removeApproveHistory);
-                db.CIP.UpdateRange(updateCip);
                 db.CIP_UPDATE_REJECT.AddRange(rejectHistory);
                 db.SaveChanges();
 

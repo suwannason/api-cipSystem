@@ -20,7 +20,7 @@ namespace cip_api.request {
     }
 
     public class rejectCostCenter {
-        public System.Int32[] id { get; set; }
+        public string[] id { get; set; }
         public string commend { get; set; }
     }
 
