@@ -124,81 +124,217 @@ namespace cip_api.controllers
             try
             {
                 string userfile = @"\\cptfile01\Dept\2310\G. Fixed Assets\Support ICD - CIP system";
-
                 // string userfile = "C:\\Users\\013817\\Desktop";
+                string sheetName = "";
                 if (body.workType == "Project ENG3")
                 {
-                    userfile += "\\4.ProjectENG3.xlsx";
+                    userfile += "\\Project_ENG3.xlsx";
+                    sheetName = "SUM-ACC";
                 }
                 else if (body.workType == "Domestic-DIE")
                 {
-
+                    userfile += "\\Domestic_DIE.xlsx";
+                    sheetName = "SUM-ACC";
                 }
                 else if (body.workType == "Domestic")
                 {
-
+                    userfile += "\\Domestic.xlsx";
+                    sheetName = "SUM-ACC";
                 }
                 else if (body.workType == "Oversea")
                 {
-
+                    userfile += "\\Oversea(StepB).xlsx";
+                    sheetName = "STEP B";
                 }
                 else if (body.workType == "Project-MSC")
                 {
-
+                    userfile += "\\Project_MSC.xlsx";
+                    sheetName = "SUM-ACC";
                 }
 
-                FileInfo Existfile = new FileInfo(userfile);
 
-                using (var package = new ExcelPackage(new FileInfo(userfile)))
+                FileInfo Existfile = new FileInfo(userfile);
+                List<string> errorCip = new List<string>();
+                List<string> successCip = new List<string>();
+                using (ExcelPackage package = new ExcelPackage(new FileInfo(userfile)))
                 {
-                    ExcelWorksheet worksheet = package.Workbook.Worksheets["SUM-ACC"];
+                    ExcelWorksheet worksheet = package.Workbook.Worksheets[sheetName];
                     int rowEnd = worksheet.Dimension.End.Row;
 
                     List<cipSchema> updateStatus = new List<cipSchema>();
-
                     foreach (string id in body.id)
                     {
                         cipSchema cip = db.CIP.Find(Int32.Parse(id));
+                        db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(id)).FirstOrDefault();
+                        try
+                        {
+                            if (cip != null)
+                            {
+                                if (body.workType == "Project ENG3")
+                                {
+                                    var searchCell = from cell in worksheet.Cells["E1:E" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    string rowNumber = searchCell.First().ToString();
+                                    worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.planDate;
+                                    worksheet.Cells["AD" + rowNumber].Value = cip.cipUpdate.actDate;
+                                    worksheet.Cells["AE" + rowNumber].Value = cip.cipUpdate.result;
+                                    worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.processDie;
+                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.model;
+                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.remark;
+                                }
+                                else if (body.workType == "Domestic-DIE")
+                                {
+                                    var searchCell = from cell in worksheet.Cells["C1:C" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    string rowNumber = searchCell.First().ToString();
 
+                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.planDate;
+                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.actDate;
+                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.result;
+                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.processDie;
+                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.model;
+                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AU" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AV" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AW" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AX" + rowNumber].Value = cip.cipUpdate.remark;
+                                }
+                                else if (body.workType == "Oversea")
+                                {
+                                    var searchCell = from cell in worksheet.Cells["AI5:AI" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    string rowNumber = searchCell.First().ToString();
+
+                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.planDate;
+                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.actDate;
+                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.result;
+                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AU" + rowNumber].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AV" + rowNumber].Value = cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AW" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AX" + rowNumber].Value = cip.cipUpdate.processDie;
+                                    worksheet.Cells["AY" + rowNumber].Value = cip.cipUpdate.model;
+                                    worksheet.Cells["AZ" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["BA" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["BB" + rowNumber].Value = cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["BC" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["BD" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    // worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["BE" + rowNumber].Value = cip.cipUpdate.remark;
+                                }
+                                else if (body.workType == "Domestic")
+                                {
+                                    var searchCell = from cell in worksheet.Cells["C1:C" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    string rowNumber = searchCell.First().ToString();
+
+                                    worksheet.Cells["W" + rowNumber].Value = cip.cipUpdate.planDate;
+                                    worksheet.Cells["X" + rowNumber].Value = cip.cipUpdate.actDate;
+                                    worksheet.Cells["Y" + rowNumber].Value = cip.cipUpdate.result;
+                                    worksheet.Cells["Z" + rowNumber].Value = cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AA" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AB" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AD" + rowNumber].Value = cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AE" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.processDie;
+                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.model;
+                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.remark;
+                                }
+                                else if (body.workType == "Project-MSC")
+                                {
+                                    var searchCell = from cell in worksheet.Cells["E2:E" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    string rowNumber = searchCell.First().ToString();
+
+                                    worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.planDate;
+                                    worksheet.Cells["AD" + rowNumber].Value = cip.cipUpdate.actDate;
+                                    worksheet.Cells["AE" + rowNumber].Value = cip.cipUpdate.result;
+                                    worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.processDie;
+                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.model;
+                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.remark;
+                                }
+
+                                successCip.Add(cip.cipNo);
+                                cip.status = "exported";
+                                updateStatus.Add(cip);
+                            }
+
+                        }
+                        catch (System.Exception)
+                        {
+                            errorCip.Add(cip.cipNo);
+                        }
                         // 48992
-                        var searchCell = from cell in worksheet.Cells["E1:E" + rowEnd.ToString()] where cell.Value.ToString() == "48992" select cell.Start.Row;
-
-                        cip.status = "exported";
-                        updateStatus.Add(cip);
-                        
-                        string rowNum = searchCell.First().ToString();
-                        Console.WriteLine(rowNum);
                     }
-
+                    db.CIP.UpdateRange(updateStatus);
+                    db.SaveChanges();
+                    package.Save();
                 }
-
-
-
-                // Console.WriteLine(worksheet.Name);
-                // Console.WriteLine(worksheet.Cells[1,1]?.Value);
-
-                // using (ExcelPackage excel = new ExcelPackage(Existfile))
-                // {
-                //     ExcelWorkbook workbook = excel.Workbook;
-                //                             // workbook.Worksheets[0];
-                //     ExcelWorksheet SUM_ACC = workbook.Worksheets[1];
-
-                //     int rowStart = SUM_ACC.Dimension.Start.Row;
-                //     int rowEnd = SUM_ACC.Dimension.End.Row;
-
-                //     string cellRange = rowStart.ToString() + ":" + rowEnd.ToString();
-
-                //     Console.WriteLine(cellRange);
-
-                // }
-                return Ok();
+                return Ok(new
+                {
+                    success = true,
+                    message = "Update CIP to dept file success.",
+                    data = new
+                    {
+                        successItem = successCip,
+                        errorItem = errorCip,
+                    }
+                });
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                return Problem(e.StackTrace);
+                if (e.Message.IndexOf("saving") != -1)
+                {
+                    return Conflict(new { success = false, message = "Please close file " + body.workType + " before export." });
+                }
+                return Conflict(new { success = false, message = "Have some error" });
             }
+        }
+
+        [HttpPatch("history"), AllowAnonymous]
+        public ActionResult getHistory(request.getHistory body)
+        {
+
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "exported" && item.workType == body.workType).OrderBy(x => x.id).Skip((body.page - 1) * body.perPage).Take(body.perPage).ToList();
+            // List<cipSchema> all = db.CIP.Where<cipSchema>(item => true).OrderBy(x => x.id).Skip((body.page - 1) * body.perPage).Take(body.perPage).ToList();
+            return Ok(new { success = true, message = "History data", data, });
         }
     }
 }

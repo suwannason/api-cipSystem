@@ -651,8 +651,7 @@ namespace cip_api.controllers
             }
         }
 
-
-        public void costCenterPrepareRejection(cipSchema cip, string commend)
+        private void costCenterPrepareRejection(cipSchema cip, string commend)
         {
 
             cip.status = "save";
