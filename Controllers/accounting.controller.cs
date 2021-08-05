@@ -335,12 +335,12 @@ namespace cip_api.controllers
             PermissionSchema checker = permissions.Find(e => e.action == "checker");
             PermissionSchema approver = permissions.Find(e => e.action == "approver");
             PermissionSchema preapare = permissions.Find(e => e.action == "prepare");
-            if (preapare != null)
-            {
-                return Conflict(new { success = true, message = "Permission denied." });
-            }
+            // if (preapare != null)
+            // {
+            //     return Conflict(new { success = true, message = "Permission denied." });
+            // }
 
-            if (checker != null)
+            if (checker != null || preapare != null)
             {
                 foreach (cipSchema item in cipSuccess)
                 {

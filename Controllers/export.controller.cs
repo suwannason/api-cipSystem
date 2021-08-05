@@ -123,7 +123,7 @@ namespace cip_api.controllers
         {
             try
             {
-                string userfile = @"\\cptfile01\Dept\2310\G. Fixed Assets\Support ICD - CIP system";
+                string userfile = @"\\cptfile01\Dept\2310\G. Fixed Assets\1.Fixed Asset - Confirm CIP (Domestic+Oversea)\Master file";
                 // string userfile = "C:\\Users\\013817\\Desktop";
                 string sheetName = "";
                 if (body.workType == "Project ENG3")

@@ -269,8 +269,8 @@ namespace cip_api.controllers
 
                     foreach (cipUpdateSchema cip_update in cipUpdate)
                     {
-                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cost-checked").FirstOrDefault();
-                        if (dataItem != null)
+                        cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
+                        if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cost-checked")
                         {
                             data.Add(dataItem);
                         }
@@ -299,8 +299,8 @@ namespace cip_api.controllers
 
                     foreach (cipUpdateSchema cip_update in cipUpdate)
                     {
-                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cc-approved").FirstOrDefault();
-                        if (dataItem != null)
+                        cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
+                        if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cc-approved")
                         {
                             data.Add(dataItem);
                         }
@@ -322,13 +322,13 @@ namespace cip_api.controllers
                     }
                     else
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => dept.IndexOf(item.costCenterOfUser) != -1  && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => dept.IndexOf(item.costCenterOfUser) != -1 && item.status == "active").ToList();
                     }
 
                     foreach (cipUpdateSchema cip_update in cipUpdate)
                     {
-                        cipSchema dataItem = db.CIP.Where<cipSchema>(item => item.id == cip_update.cipSchemaid && item.status == "cost-prepared").FirstOrDefault();
-                        if (dataItem != null)
+                        cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
+                        if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cost-prepared")
                         {
                             data.Add(dataItem);
                         }
@@ -405,25 +405,19 @@ namespace cip_api.controllers
                 }
                 if (approver.Count != 0 && data.status == "cc-checked")
                 {
-                    if (deptCode.IndexOf("55XX") == -1)
+                    Console.WriteLine("case approve: " + deptCode);
+                    if (deptCode.IndexOf("55XX") != -1)
                     {
-                        PermissionSchema approving = approver.Find(e => e.deptCode == data.cc);
-                        if (approving != null)
-                        {
-                            if (data.cc == approving.deptCode)
-                            {
-                                data.status = "cc-approved";
-                                status = "cc-approved";
-                            }
-                        }
+
+                        data.status = "cc-approved";
+                        status = "cc-approved";
+
                     }
                     else // requester approve 55XX dept
                     {
-                        if (data.cc.IndexOf("55") != -1)
-                        {
-                            data.status = "cc-approved";
-                            status = "cc-approved";
-                        }
+                        data.status = "cc-approved";
+                        status = "cc-approved";
+
                     }
                 }
                 approve.onApproveStep = status;
@@ -576,7 +570,8 @@ namespace cip_api.controllers
                 }
                 Console.WriteLine("status: " + status);
                 data.status = status;
-                if (status == "cost-prepared") {
+                if (status == "cost-prepared")
+                {
                     data.commend = null;
                 }
 
@@ -633,7 +628,7 @@ namespace cip_api.controllers
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
                     "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",
-                    "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
+                    "REMARK", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
                     }
                 };
 
@@ -962,7 +957,7 @@ namespace cip_api.controllers
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
                     "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",
-                    "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
+                    "REMARK", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
                     }
                 };
 

@@ -150,7 +150,7 @@ namespace cip_api.controllers
                             }
                             if (item.cipNo != "-")
                             {
-                                cipSchema cipCreate = excelData.Find(e => e.cipNo == item.cipNo && e.subCipNo == item.subCipNo && e.cc == item.cc);
+                                cipSchema cipCreate = db.CIP.Where<cipSchema>(cip => cip.cipNo == item.cipNo && cip.subCipNo == item.subCipNo).FirstOrDefault();
                                 if (cipCreate == null)
                                 {
                                     excelData.Add(item);
@@ -207,7 +207,6 @@ namespace cip_api.controllers
                     int colCount = sheet.Dimension.End.Column;
                     int rowCount = sheet.Dimension.End.Row;
 
-                    Console.WriteLine(colCount + " == " + rowCount);
                     for (int row = 3; row <= rowCount; row += 1)
                     {
                         cipUpdateSchema item = new cipUpdateSchema();
@@ -226,7 +225,7 @@ namespace cip_api.controllers
                                     {
                                         break;
                                     }
-                                    cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open")).FirstOrDefault();
+                                    cipSchema data = db.CIP.Where<cipSchema>(item => item.cipNo == value && (item.status == "open" || item.status == "reject")).FirstOrDefault();
                                     if (data != null)
                                     {
                                         item.cipSchemaid = data.id;
@@ -265,20 +264,31 @@ namespace cip_api.controllers
                             }
                             item.status = "active";
                             item.createDate = dateNow;
-
                         }
-                        if (item.cipSchemaid != 0)
+                        cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == item.cipSchemaid).FirstOrDefault();
+
+                        if (cipUpdate == null)
                         {
                             items.Add(item);
                         }
+                        else
+                        {
+                            cipUpdate = item;
+                            db.CIP_UPDATE.Update(cipUpdate);
+                        }
+
+                        // if (item.cipSchemaid != 0)
+                        // {
+                        //     items.Add(item);
+                        // }
                     }
                 }
 
                 // return Ok(items);
 
                 // db.APPROVAL.AddRange(prepare);
-                db.CIP_UPDATE.AddRange(items);
                 db.CIP.UpdateRange(updateStatus);
+                db.CIP_UPDATE.AddRange(items);
                 db.SaveChanges();
 
                 return Ok(items);
@@ -296,10 +306,7 @@ namespace cip_api.controllers
             List<cipSchema> data = new List<cipSchema>();
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
-                data = db.CIP.Where<cipSchema>(item => item.status != "finished")
-               .Select(fields =>
-               new cipSchema { cipNo = fields.cipNo, subCipNo = fields.subCipNo, vendor = fields.vendor, name = fields.name, qty = fields.qty, totalThb = fields.totalThb, cc = fields.cc, id = fields.id, status = fields.status, totalThb_1 = fields.totalThb_1, totalOfCip = fields.totalOfCip })
-               .ToList<cipSchema>();
+                data = db.CIP.Where<cipSchema>(item => item.status != "finished").ToList<cipSchema>();
                 return Ok(new { success = true, data, });
             }
             string deptCode = User.FindFirst("deptCode")?.Value;
@@ -311,51 +318,52 @@ namespace cip_api.controllers
             {
                 if (code != "55XX")
                 {
-                    data = db.CIP.Where<cipSchema>(item => (item.status != "finished") && item.cc == code)
-                       .Select(fields =>
-                       new cipSchema
-                       {
-                           cipNo = fields.cipNo,
-                           subCipNo = fields.subCipNo,
-                           vendor = fields.vendor,
-                           name = fields.name,
-                           totalThb_1 = fields.totalThb_1,
-                           qty = fields.qty,
-                           totalThb = fields.totalThb,
-                           cc = fields.cc,
-                           status = fields.status,
-                           id = fields.id,
-                           commend = fields.commend,
-                           totalOfCip = fields.totalOfCip,
-                       })
-                       .ToList<cipSchema>();
+                    data = db.CIP.Where<cipSchema>(item => (item.status != "finished") && (item.cc == code || item.cipUpdate.costCenterOfUser == code)).ToList<cipSchema>();
                 }
                 else
                 { // 55XX
-                    data = db.CIP.Where<cipSchema>(item => (item.status != "finished") && item.cc.IndexOf("55") != -1)
-                                           .Select(fields =>
-                                           new cipSchema
-                                           {
-                                               cipNo = fields.cipNo,
-                                               subCipNo = fields.subCipNo,
-                                               vendor = fields.vendor,
-                                               name = fields.name,
-                                               totalThb_1 = fields.totalThb_1,
-                                               qty = fields.qty,
-                                               totalThb = fields.totalThb,
-                                               cc = fields.cc,
-                                               status = fields.status,
-                                               id = fields.id,
-                                               commend = fields.commend,
-                                               totalOfCip = fields.totalOfCip,
-                                           })
-                                           .ToList<cipSchema>();
+                    data = db.CIP.Where<cipSchema>(item => item.cc.IndexOf("55") != -1 && item.status != "finished").ToList();
+                    //    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0);
                 }
-
                 returnData.AddRange(data);
             }
-
+            // return Ok(data);
             returnData = returnData.GroupBy(x => x.id).Select(x => x.First()).ToList();
+            // Console.WriteLine(returnData.Count);
+            List<cipSchema> response = new List<cipSchema>();
+
+            foreach (cipSchema cip in returnData)
+            {
+                cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == cip.id).FirstOrDefault();
+
+                if (cip.status == "open" || cip.status == "reject" || cip.status == "draft")
+                {
+                    response.Add(cip);
+                }
+                else if (cip.status.IndexOf("cc") != -1 || cip.status == "save")
+                {
+                    if (cip.status.IndexOf("approve") == -1)
+                    {
+                        response.Add(cip);
+                    }
+                    else if (cip.status == "cc-approved" && deptCode.IndexOf(cipUpdate.costCenterOfUser) != -1)
+                    {
+                        response.Add(cip);
+                    }
+                    else
+                    {
+                        response.Add(cip);
+                    }
+
+                }
+                else if (cip.status.IndexOf("cost") != -1 && deptCode.IndexOf(cipUpdate.costCenterOfUser) != -1)
+                {
+                    if (cip.status != "cost-approved")
+                    {
+                        response.Add(cip);
+                    }
+                }
+            }
             // List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == deptCode && item.status != "finish").ToList();
 
             // if (cipUpdate.Count > 0)
@@ -369,7 +377,7 @@ namespace cip_api.controllers
             //         }
             //     }
             // }
-            return Ok(new { success = true, data = returnData, });
+            return Ok(new { success = true, data = response, });
         }
         [HttpGet("history")]
         public ActionResult history()
@@ -388,28 +396,28 @@ namespace cip_api.controllers
                 string dept = User.FindFirst("dept")?.Value;
 
                 List<cipSchema> data = new List<cipSchema>();
-                if (body.id.Length == 0)
+                // if (body.id.Length == 0)
+                // {
+                //     if (dept.ToLower() != "acc" && dept != "admin")
+                //     {
+                //         data = db.CIP.Where<cipSchema>(item => item.cc == deptCode && item.status == "open").ToList<cipSchema>();
+                //         db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
+                //     }
+                //     else
+                //     {
+                //         data = db.CIP.Where<cipSchema>(item => item.status == "open").ToList<cipSchema>();
+                //         db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
+                //     }
+                // }
+                // else
+                // {
+                foreach (int id in body.id)
                 {
-                    if (dept.ToLower() != "acc" && dept != "admin")
-                    {
-                        data = db.CIP.Where<cipSchema>(item => item.cc == deptCode && item.status == "open").ToList<cipSchema>();
-                        db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
-                    }
-                    else
-                    {
-                        data = db.CIP.Where<cipSchema>(item => item.status == "open").ToList<cipSchema>();
-                        db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active");
-                    }
+                    cipSchema item = db.CIP.Find(id);
+                    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == id).FirstOrDefault();
+                    data.Add(item);
                 }
-                else
-                {
-                    foreach (int id in body.id)
-                    {
-                        cipSchema item = db.CIP.Find(id);
-                        db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == id).FirstOrDefault();
-                        data.Add(item);
-                    }
-                }
+                // }
 
                 MemoryStream stream = new MemoryStream();
                 using (ExcelPackage excel = new ExcelPackage(stream))
@@ -425,7 +433,7 @@ namespace cip_api.controllers
                     "Operating Date (Plan)", "Operating Date (Act)", "Result", "Reason diff (NG) Budget&Actual", "Fixed Asset Code",
                     "CLASS FIXED ASSET", "Fix Asset Name (English only)", "Serial No.", "part\nnumber\nDie No", "Process Die", "Model",
                     "Cost Center of User", "Transfer to supplier", "ให้ขึ้น Fix Asset  กี่ตัว", "New BFMor Add BFM", "Reason for Delay", "Add CIP/BFM No.",
-                    "REMARK (Add CIP/BFM No.)", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
+                    "REMARK", "ITC--> BOI TYPE (Machine / Die / Sparepart / NON BOI)"
                     }
                 };
 
@@ -634,7 +642,9 @@ namespace cip_api.controllers
                                                         upFixAsset = cipUpdate.upFixAsset,
                                                     }
                                                 );
-                            db.CIP_UPDATE.Remove(cipUpdate);
+                            // db.CIP_UPDATE.Remove(cipUpdate);
+                            cipUpdate.status = "reject";
+                            db.CIP_UPDATE.Update(cipUpdate);
                         }
 
                         List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == id).ToList();

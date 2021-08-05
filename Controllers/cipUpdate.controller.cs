@@ -23,14 +23,17 @@ namespace cip_api.controllers
         {
             db = _db;
         }
-        
+
         [HttpPut]
-        public ActionResult update(cipUpdateEdit body) {
+        public ActionResult update(cipUpdateEdit body)
+        {
             cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(body.id)).FirstOrDefault();
 
-            if (cipUpdate == null) {
+            if (cipUpdate == null)
+            {
                 db.CIP_UPDATE.Add(
-                    new cipUpdateSchema {
+                    new cipUpdateSchema
+                    {
                         actDate = body.actDate,
                         addCipBfmNo = body.addCipBfmNo,
                         boiType = "-",
@@ -59,6 +62,10 @@ namespace cip_api.controllers
 
                 return Ok(new { success = true, message = "Confirm CIP success." });
             }
+            
+            // string oldCostCenter = cipUpdate.costCenterOfUser;
+            // string newCostCenter = body.costCenterOfUser;
+
             cipUpdate.actDate = body.actDate;
             cipUpdate.addCipBfmNo = body.addCipBfmNo;
             cipUpdate.boiType = body.boiType;
@@ -78,8 +85,10 @@ namespace cip_api.controllers
             cipUpdate.serialNo = body.serialNo;
             cipUpdate.tranferToSupplier = body.tranferToSupplier;
             cipUpdate.upFixAsset = body.upFixAsset;
+            cipUpdate.status = "active";
 
             db.CIP_UPDATE.Update(cipUpdate);
+
             db.SaveChanges();
             return Ok(new { success = true, message = "Update CIP success." });
         }

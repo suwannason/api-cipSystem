@@ -34,7 +34,7 @@ namespace cip_api.controllers
         [HttpGet("waiting")]
         public ActionResult waiting(string user, string dcode)
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => (item.status == "cc-approved" || item.status == "cost-approved") && item.cc == "5110").ToList<cipSchema>();
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => (item.status == "cc-approved" || item.status == "cost-approved") && item.cipUpdate.costCenterOfUser == "5110").ToList<cipSchema>();
             // db.CIP_UPDATE.ToList();
 
             List<cipSchema> returnData = new List<cipSchema>();
