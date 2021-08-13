@@ -164,7 +164,7 @@ namespace cip_api.controllers
                             {
                                 message = "On ACC confirm diff";
                             }
-                            else if (item.cipUpdate.costCenterOfUser.IndexOf("55") != -1
+                            else if (item.cipUpdate.costCenterOfUser.IndexOf("55") != 0
                                  || item.cipUpdate.costCenterOfUser == "2130"
                                  || item.cipUpdate.costCenterOfUser == "2140"
                                  || item.cipUpdate.costCenterOfUser == "9555"
@@ -424,18 +424,21 @@ namespace cip_api.controllers
                         }
                         else if (item.cc != item.cipUpdate.costCenterOfUser && item.cipUpdate.tranferToSupplier == "-" && item.cipUpdate.result.ToLower() == "ok")
                         {
-                            if (item.cipUpdate.costCenterOfUser.IndexOf("55") != -1
-                            || item.cipUpdate.costCenterOfUser == "2130"
-                            || item.cipUpdate.costCenterOfUser == "2140"
-                            || item.cipUpdate.costCenterOfUser == "9555"
-                            || item.cipUpdate.costCenterOfUser == "5610"
-                            || item.cipUpdate.costCenterOfUser == "5619"
-                            || item.cipUpdate.costCenterOfUser == "5650"
-                            || item.cipUpdate.costCenterOfUser == "5655"
-                            || item.cipUpdate.costCenterOfUser == "9333"
-                            || item.cipUpdate.costCenterOfUser == "5670"
-                            || item.cipUpdate.costCenterOfUser == "5675"
-                            || item.cipUpdate.costCenterOfUser == "9444"
+                            if (item.cc.IndexOf("55") == 0 && item.cipUpdate.costCenterOfUser.IndexOf("55") == 0)
+                            {
+                                returnData.Add(item);
+                            }
+                            else if (item.cipUpdate.costCenterOfUser == "2130" && (item.cc == "2140" || item.cc == "9555")
+                            || item.cipUpdate.costCenterOfUser == "2140" && (item.cc == "2130" || item.cc == "9555")
+                            || item.cipUpdate.costCenterOfUser == "9555" && (item.cc == "2130" || item.cc == "2140")
+                            || item.cipUpdate.costCenterOfUser == "5610" && (item.cc == "5619")
+                            || item.cipUpdate.costCenterOfUser == "5619" && (item.cc == "5610")
+                            || item.cipUpdate.costCenterOfUser == "5650" && (item.cc == "5655" || item.cc == "9333")
+                            || item.cipUpdate.costCenterOfUser == "5655" && (item.cc == "5650" || item.cc == "9333")
+                            || item.cipUpdate.costCenterOfUser == "9333" && (item.cc == "5650" || item.cc == "5655")
+                            || item.cipUpdate.costCenterOfUser == "5670" && (item.cc == "5675" || item.cc == "9444")
+                            || item.cipUpdate.costCenterOfUser == "5675" && (item.cc == "5670" || item.cc == "9444")
+                            || item.cipUpdate.costCenterOfUser == "9444" && (item.cc == "5670" || item.cc == "5675")
                             )
                             {
                                 returnData.Add(item);
@@ -504,6 +507,27 @@ namespace cip_api.controllers
             catch (Exception e)
             {
                 return Problem(e.StackTrace);
+            }
+        }
+
+        [HttpPost("sendback")]
+        public ActionResult sendBack(ACCsendBack body)
+        {
+            try
+            {
+                if (body.toStep == "requester-prepare")
+                {
+
+                }
+                else if (body.toStep == "user-prepare")
+                {
+
+                }
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return Conflict(e.StackTrace);
             }
         }
     }

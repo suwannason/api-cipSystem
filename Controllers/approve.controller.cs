@@ -98,7 +98,7 @@ namespace cip_api.controllers
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
                             }
                             else
                             {
@@ -111,7 +111,7 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
                         }
                         else
                         {
@@ -131,7 +131,7 @@ namespace cip_api.controllers
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
                             }
                             else
                             {
@@ -144,7 +144,7 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
                         }
                         else
                         {
@@ -164,7 +164,7 @@ namespace cip_api.controllers
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
                             }
                             else
                             {
@@ -177,7 +177,7 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") != -1).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
                         }
                         else
                         {
@@ -260,7 +260,7 @@ namespace cip_api.controllers
                     List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
                     if (dept == "55XX")
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0 && item.status == "active").ToList();
                     }
                     else
                     {
@@ -296,7 +296,7 @@ namespace cip_api.controllers
                     List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
                     if (dept == "55XX")
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0 && item.status == "active").ToList();
                     }
                     else
                     {
@@ -332,7 +332,7 @@ namespace cip_api.controllers
                     List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
                     if (dept == "55XX")
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") != -1 && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0 && item.status == "active").ToList();
                     }
                     else
                     {
@@ -405,28 +405,28 @@ namespace cip_api.controllers
                 ApprovalSchema approve = new ApprovalSchema();
                 cipSchema data = db.CIP.Find(id);
 
-                if (prepared != null && data.status == "draft")
+                if (data.status == "draft")
                 {
                     data.status = "save";
                     status = "save";
                 }
-                if (checker != null && data.status == "save")
+                else if (data.status == "save")
                 {
                     if ((checker.deptCode.IndexOf(data.cc) != -1) && data.status != "cc-checked")
                     {
                         data.status = "cc-checked";
                         status = "cc-checked";
                     }
-                    else if (checker.deptCode == "55XX" && data.status != "cc-checked" && data.cc.IndexOf("55") != -1)
+                    else if (checker.deptCode == "55XX" && data.status != "cc-checked" && data.cc.IndexOf("55") == 0)
                     {
                         data.status = "cc-checked";
                         status = "cc-checked";
                     }
                 }
-                if (approver.Count != 0 && data.status == "cc-checked")
+                else if (data.status == "cc-checked")
                 {
                     Console.WriteLine("case approve: " + deptCode);
-                    if (deptCode.IndexOf("55XX") != -1)
+                    if (deptCode.IndexOf("55XX") == 0)
                     {
 
                         data.status = "cc-approved";
@@ -541,7 +541,6 @@ namespace cip_api.controllers
                         }
                     }
                 }
-                Console.WriteLine("status: " + status);
                 data.status = status;
                 if (status == "cost-prepared")
                 {

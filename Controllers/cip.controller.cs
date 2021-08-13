@@ -322,7 +322,7 @@ namespace cip_api.controllers
                 }
                 else
                 { // 55XX
-                    data = db.CIP.Where<cipSchema>(item => item.cc.IndexOf("55") != -1 && item.status != "finished").ToList();
+                    data = db.CIP.Where<cipSchema>(item => item.cc.IndexOf("55") == 0 && item.status != "finished").ToList();
                     //    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0);
                 }
                 returnData.AddRange(data);
