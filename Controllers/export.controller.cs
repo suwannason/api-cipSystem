@@ -243,7 +243,10 @@ namespace cip_api.controllers
                                 }
                                 else if (body.workType == "Domestic")
                                 {
-                                    var searchCell = from cell in worksheet.Cells["C1:C" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    var searchCell = from cell in worksheet.Cells["C3:C" + rowEnd.ToString()]
+                                                     where cell.Value.ToString() == cip.cipNo
+                                                     select cell.Start.Row;
+
                                     string rowNumber = searchCell.First().ToString();
 
                                     worksheet.Cells["W" + rowNumber].Value = cip.cipUpdate.planDate;
@@ -267,7 +270,7 @@ namespace cip_api.controllers
                                 }
                                 else if (body.workType == "Project-MSC")
                                 {
-                                    var searchCell = from cell in worksheet.Cells["E2:E" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    var searchCell = from cell in worksheet.Cells["E3:E" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
                                     string rowNumber = searchCell.First().ToString();
 
                                     worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.planDate;
@@ -276,7 +279,7 @@ namespace cip_api.controllers
                                     worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.reasonDiff;
                                     worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
                                     worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.fixAssetName;
                                     worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.serialNo;
                                     worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
                                     worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.processDie;
@@ -296,8 +299,9 @@ namespace cip_api.controllers
                             }
 
                         }
-                        catch (System.Exception)
+                        catch (System.Exception e)
                         {
+                            Console.WriteLine(e.StackTrace);
                             errorCip.Add(cip.cipNo);
                         }
                         // 48992

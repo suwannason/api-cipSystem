@@ -156,15 +156,34 @@ namespace cip_api.controllers
                     {
                         if (item.cc != item.cipUpdate.costCenterOfUser)
                         {
-                            message = "On Cost center check";
-                        }
-                        else if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
-                        {
-                            message = "On ITC confirm";
-                        }
-                        else if (item.cipUpdate.result == "NG")
-                        {
-                            message = "On ACC confirm diff";
+                            if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
+                            {
+                                message = "On ITC confirm";
+                            }
+                            else if (item.cipUpdate.result == "NG")
+                            {
+                                message = "On ACC confirm diff";
+                            }
+                            else if (item.cipUpdate.costCenterOfUser.IndexOf("55") != -1
+                                 || item.cipUpdate.costCenterOfUser == "2130"
+                                 || item.cipUpdate.costCenterOfUser == "2140"
+                                 || item.cipUpdate.costCenterOfUser == "9555"
+                                 || item.cipUpdate.costCenterOfUser == "5610"
+                                 || item.cipUpdate.costCenterOfUser == "5619"
+                                 || item.cipUpdate.costCenterOfUser == "5650"
+                                 || item.cipUpdate.costCenterOfUser == "5655"
+                                 || item.cipUpdate.costCenterOfUser == "9333"
+                                 || item.cipUpdate.costCenterOfUser == "5670"
+                                 || item.cipUpdate.costCenterOfUser == "5675"
+                                 || item.cipUpdate.costCenterOfUser == "9444"
+ )
+                            {
+                                message = "On confirm FA";
+                            }
+                            else
+                            {
+                                message = "On Cost center check";
+                            }
                         }
                         else
                         {
@@ -195,9 +214,13 @@ namespace cip_api.controllers
                     {
                         message = "On confirm FA";
 
-                    } else if (item.status == "open") {
+                    }
+                    else if (item.status == "open")
+                    {
                         message = "On Requester prepare";
-                    } else if (item.status == "draft") {
+                    }
+                    else if (item.status == "draft")
+                    {
                         message = "On Requester drafted";
                     }
                     returnData.Add(
@@ -398,6 +421,25 @@ namespace cip_api.controllers
                         if (item.cc == item.cipUpdate.costCenterOfUser && item.cipUpdate.tranferToSupplier == "-" && item.cipUpdate.result.ToLower() != "ng")
                         {
                             returnData.Add(item);
+                        }
+                        else if (item.cc != item.cipUpdate.costCenterOfUser && item.cipUpdate.tranferToSupplier == "-" && item.cipUpdate.result.ToLower() == "ok")
+                        {
+                            if (item.cipUpdate.costCenterOfUser.IndexOf("55") != -1
+                            || item.cipUpdate.costCenterOfUser == "2130"
+                            || item.cipUpdate.costCenterOfUser == "2140"
+                            || item.cipUpdate.costCenterOfUser == "9555"
+                            || item.cipUpdate.costCenterOfUser == "5610"
+                            || item.cipUpdate.costCenterOfUser == "5619"
+                            || item.cipUpdate.costCenterOfUser == "5650"
+                            || item.cipUpdate.costCenterOfUser == "5655"
+                            || item.cipUpdate.costCenterOfUser == "9333"
+                            || item.cipUpdate.costCenterOfUser == "5670"
+                            || item.cipUpdate.costCenterOfUser == "5675"
+                            || item.cipUpdate.costCenterOfUser == "9444"
+                            )
+                            {
+                                returnData.Add(item);
+                            }
                         }
                     }
                     else if (item.status == "cost-approved")

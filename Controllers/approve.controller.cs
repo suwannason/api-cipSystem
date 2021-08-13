@@ -272,8 +272,14 @@ namespace cip_api.controllers
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cost-checked")
                         {
-                            data.Add(dataItem);
+                           ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
+                                                                 approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "cc-approved").FirstOrDefault();
+                            if (prepareDuplicatCheck == null)
+                            {
+                                data.Add(dataItem);
+                            }
                         }
+                        
 
                     }
                 }
@@ -302,10 +308,18 @@ namespace cip_api.controllers
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cc-approved")
                         {
-                            data.Add(dataItem);
+                            ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
+                                                                  approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "save").FirstOrDefault();
+                            if (prepareDuplicatCheck == null)
+                            {
+                                data.Add(dataItem);
+                            }
+
                         }
                     }
                 }
+
+
             }
             if (checker != null)
             {
@@ -330,7 +344,13 @@ namespace cip_api.controllers
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cost-prepared")
                         {
-                            data.Add(dataItem);
+                            ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
+                                                                 approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "cc-checked").FirstOrDefault();
+                            if (prepareDuplicatCheck == null)
+                            {
+                                data.Add(dataItem);
+                            }
+
                         }
                     }
                 }
