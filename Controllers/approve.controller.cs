@@ -152,7 +152,7 @@ namespace cip_api.controllers
                         }
                     }
                 }
-                if (checker != null)
+                if (checker != null && data.Count == 0)
                 {
                     List<string> multidept = deptCode.Split(',').ToList();
                     message = "CIP for data check. (" + deptCode + " )";
@@ -455,53 +455,6 @@ namespace cip_api.controllers
 
             db.CIP.UpdateRange(updateRange);
             db.APPROVAL.AddRange(approvals);
-
-            // SEND NOTIFICATIONS
-            // List<PermissionSchema> users = new List<PermissionSchema>();
-            // List<PermissionSchema> createTo = new List<PermissionSchema>();
-            // string message = ""; string title = ""; string type = "";
-
-            // List<NotificationSchema> notifications = new List<NotificationSchema>();
-
-            // if (status == "cc-checked")
-            // {
-            //     users = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode == deptCode).ToList();
-            //     message = updateRange.Count + " CIP prepared on " + DateTime.Now.ToString("yyyy/MM/dd HH:mm");
-            //     title = "Checking request";
-            //     type = "check";
-            //     createTo = users.FindAll(e => e.action == "approver");
-            // }
-            // else if (status == "cc-approved")
-            // {
-            //     int diff = 0;
-
-            //     foreach (cipSchema item in updateRange)
-            //     {
-            //         cipUpdateSchema cipUpdateCheck = db.CIP_UPDATE.Where<cipUpdateSchema>(cip => cip.cipSchemaid == item.id).FirstOrDefault();
-            //         if (cipUpdateCheck.costCenterOfUser != item.cc)
-            //         {
-            //             diff += 1;
-            //             // userPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode == cipUpdateCheck.costCenterOfUser && item.action == "prepare").ToList();
-            //         }
-            //     }
-            //     type = "approve";
-            // }
-
-
-            // foreach (PermissionSchema item in createTo)
-            // {
-            //     notifications.Add(new NotificationSchema
-            //     {
-            //         createDate = DateTime.Now.ToString("yyyy/MM/dd"),
-            //         message = message,
-            //         title = title,
-            //         status = "created",
-            //         type = type,
-            //         userSchemaempNo = item.empNo,
-            //     });
-            // }
-            // db.NOTIFICATIONS.AddRange(notifications);
-            // SEND NOTIFICATIONS
 
             db.SaveChanges();
 
