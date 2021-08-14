@@ -515,15 +515,30 @@ namespace cip_api.controllers
         {
             try
             {
-                if (body.toStep == "requester-prepare")
+                foreach (string id in body.id)
                 {
+                    cipSchema cip = db.CIP.Find(Int32.Parse(id));
+                    cip.commend = body.commend;
+                    if (body.toStep == "requester-prepare")
+                    {
+                        cip.status = "open";
+                        List<ApprovalSchema> approving = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == Int32.Parse(id)).ToList();
+
+                        db.APPROVAL.RemoveRange(approving);
+                    }
+                    else if (body.toStep == "user-prepare")
+                    {
+                        cip.status = "cc-approved";
+                        List<ApprovalSchema> approving = db.APPROVAL.Where<ApprovalSchema>(item =>
+                        item.cipSchemaid == Int32.Parse(id) && item.onApproveStep.IndexOf("cost") != -1).ToList();
+
+                        db.APPROVAL.RemoveRange(approving);
+                    }
+                    db.CIP.Update(cip);
 
                 }
-                else if (body.toStep == "user-prepare")
-                {
-
-                }
-                return Ok();
+                db.SaveChanges();
+                return Ok(new { success = true, message = "Send back CIP success. " });
             }
             catch (Exception e)
             {

@@ -225,7 +225,7 @@ namespace cip_api.controllers
             }
         }
 
-        [HttpGet("costCenter")]
+        [HttpGet("costCenter"), ]
         public ActionResult costCenter(string user, string code)
         {
             string username = ""; string deptCode = "";

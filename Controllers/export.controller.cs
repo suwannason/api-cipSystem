@@ -219,27 +219,42 @@ namespace cip_api.controllers
                                 }
                                 else if (body.workType == "Oversea")
                                 {
-                                    var searchCell = from cell in worksheet.Cells["AI5:AI" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
-                                    string rowNumber = searchCell.First().ToString();
+                                    // var searchCell = from cell in worksheet.Cells["AI6:AI" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
+                                    // string rowNumber = searchCell.First().ToString();
+                                    int i = 6;
+                                    string rownum = "";
+                                    foreach (ExcelCellBase cell in worksheet.Cells["AI6:AI" + rowEnd.ToString()])
+                                    {
+                                        string value = worksheet.Cells[cell.ToString()].Value?.ToString();
+                                        if (value == cip.cipNo)
+                                        {
+                                            rownum = cell.ToString();
+                                            break;
+                                        }
+                                        i += 1;
+                                        // Console.WriteLine(value);
+                                        // Console.WriteLine(cell);
+                                    }
+                                    rownum = string.Join("", rownum.ToCharArray().Where(Char.IsDigit));
 
-                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.planDate;
-                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.actDate;
-                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.result;
-                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonDiff;
-                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
-                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AU" + rowNumber].Value = cip.cipUpdate.fixAssetName;
-                                    worksheet.Cells["AV" + rowNumber].Value = cip.cipUpdate.serialNo;
-                                    worksheet.Cells["AW" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
-                                    worksheet.Cells["AX" + rowNumber].Value = cip.cipUpdate.processDie;
-                                    worksheet.Cells["AY" + rowNumber].Value = cip.cipUpdate.model;
-                                    worksheet.Cells["AZ" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
-                                    worksheet.Cells["BA" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
-                                    worksheet.Cells["BB" + rowNumber].Value = cip.cipUpdate.upFixAsset;
-                                    worksheet.Cells["BC" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
-                                    worksheet.Cells["BD" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
-                                    // worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
-                                    worksheet.Cells["BE" + rowNumber].Value = cip.cipUpdate.remark;
+                                    worksheet.Cells["AO" + rownum].Value = cip.cipUpdate.planDate;
+                                    worksheet.Cells["AP" + rownum].Value = cip.cipUpdate.actDate;
+                                    worksheet.Cells["AQ" + rownum].Value = cip.cipUpdate.result;
+                                    worksheet.Cells["AR" + rownum].Value = cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AS" + rownum].Value = cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AT" + rownum].Value = cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AU" + rownum].Value = cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AV" + rownum].Value = cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AW" + rownum].Value = cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AX" + rownum].Value = cip.cipUpdate.processDie;
+                                    worksheet.Cells["AY" + rownum].Value = cip.cipUpdate.model;
+                                    worksheet.Cells["AZ" + rownum].Value = cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["BA" + rownum].Value = cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["BB" + rownum].Value = cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["BC" + rownum].Value = cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["BD" + rownum].Value = cip.cipUpdate.reasonForDelay;
+                                    // worksheet.Cells["AM" + rownum].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["BE" + rownum].Value = cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Domestic")
                                 {
@@ -323,11 +338,12 @@ namespace cip_api.controllers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+
                 if (e.Message.IndexOf("saving") != -1)
                 {
                     return Conflict(new { success = false, message = "Please close file " + body.workType + " before export." });
                 }
+                Console.WriteLine(e.StackTrace);
                 return Conflict(new { success = false, message = "Have some error" });
             }
         }
