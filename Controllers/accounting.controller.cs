@@ -119,7 +119,7 @@ namespace cip_api.controllers
         {
             try
             {
-                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finished").ToList();
+                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status != "finished" && item.status != "exported").ToList();
                 db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.status == "active").ToList();
 
                 List<dynamic> returnData = new List<dynamic>();
@@ -156,6 +156,24 @@ namespace cip_api.controllers
                     {
                         if (item.cc != item.cipUpdate.costCenterOfUser)
                         {
+                            if (item.cc.StartsWith("55") && item.cipUpdate.costCenterOfUser.StartsWith("55"))
+                            {
+                                if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
+                                {
+                                    message = "On ITC confirm";
+                                }
+                            }
+                            else if (item.cipUpdate.result == "NG")
+                            {
+                                message = "On ACC confirm diff";
+                            }
+                            else
+                            {
+                                message = "On Cost center prepare";
+                            }
+                        }
+                        else
+                        {
                             if (item.cipUpdate.tranferToSupplier != "-" && item.cipUpdate.costCenterOfUser == "5110")
                             {
                                 message = "On ITC confirm";
@@ -164,30 +182,10 @@ namespace cip_api.controllers
                             {
                                 message = "On ACC confirm diff";
                             }
-                            else if (item.cipUpdate.costCenterOfUser.IndexOf("55") != 0
-                                 || item.cipUpdate.costCenterOfUser == "2130"
-                                 || item.cipUpdate.costCenterOfUser == "2140"
-                                 || item.cipUpdate.costCenterOfUser == "9555"
-                                 || item.cipUpdate.costCenterOfUser == "5610"
-                                 || item.cipUpdate.costCenterOfUser == "5619"
-                                 || item.cipUpdate.costCenterOfUser == "5650"
-                                 || item.cipUpdate.costCenterOfUser == "5655"
-                                 || item.cipUpdate.costCenterOfUser == "9333"
-                                 || item.cipUpdate.costCenterOfUser == "5670"
-                                 || item.cipUpdate.costCenterOfUser == "5675"
-                                 || item.cipUpdate.costCenterOfUser == "9444"
- )
+                            else
                             {
                                 message = "On confirm FA";
                             }
-                            else
-                            {
-                                message = "On Cost center check";
-                            }
-                        }
-                        else
-                        {
-                            message = "On confirm FA";
                         }
 
                     }
@@ -424,7 +422,7 @@ namespace cip_api.controllers
                         }
                         else if (item.cc != item.cipUpdate.costCenterOfUser && item.cipUpdate.tranferToSupplier == "-" && item.cipUpdate.result.ToLower() == "ok")
                         {
-                            if (item.cc.IndexOf("55") == 0 && item.cipUpdate.costCenterOfUser.IndexOf("55") == 0)
+                            if (item.cc.StartsWith("55") && item.cipUpdate.costCenterOfUser.StartsWith("55"))
                             {
                                 returnData.Add(item);
                             }

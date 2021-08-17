@@ -98,7 +98,7 @@ namespace cip_api.controllers
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.StartsWith("55")).ToList<cipSchema>());
                             }
                             else
                             {
@@ -111,7 +111,7 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "cc-checked" && item.cc.StartsWith("55")).ToList<cipSchema>());
                         }
                         else
                         {
@@ -131,7 +131,7 @@ namespace cip_api.controllers
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.StartsWith("55")).ToList<cipSchema>());
                             }
                             else
                             {
@@ -144,7 +144,7 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "draft" && item.cc.StartsWith("55")).ToList<cipSchema>());
                         }
                         else
                         {
@@ -164,7 +164,7 @@ namespace cip_api.controllers
                         {
                             if (code == "55XX")
                             {
-                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
+                                data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.StartsWith("55")).ToList<cipSchema>());
                             }
                             else
                             {
@@ -177,7 +177,7 @@ namespace cip_api.controllers
                     {
                         if (deptCode == "55XX")
                         {
-                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.IndexOf("55") == 0).ToList<cipSchema>());
+                            data.AddRange(db.CIP.Where<cipSchema>(item => item.status == "save" && item.cc.StartsWith("55")).ToList<cipSchema>());
                         }
                         else
                         {
@@ -296,7 +296,7 @@ namespace cip_api.controllers
                     List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
                     if (dept == "55XX")
                     {
-                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0 && item.status == "active").ToList();
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.StartsWith("55") && item.status == "active").ToList();
                     }
                     else
                     {

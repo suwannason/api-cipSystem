@@ -109,7 +109,7 @@ namespace cip_api.controllers
                             for (int col = 1; col < colCount; col += 1)
                             {
                                 string value = sheet.Cells[row, col].Value?.ToString();
-                                if (value == null)
+                                if (value == null || value == "")
                                 {
                                     value = "-";
                                 }
@@ -130,16 +130,98 @@ namespace cip_api.controllers
                                     case 13: item.qty = value; break;
                                     case 14: item.exRate = value; break;
                                     case 15: item.cur = value; break;
-                                    case 16: item.perUnit = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 17: item.totalJpy = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 18: item.totalThb = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 19: item.averageFreight = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 20: item.averageInsurance = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 21: item.totalJpy_1 = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 22: item.totalThb_1 = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
-                                    case 23: item.perUnitThb = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    // item.perUnit = value != "-" ? Double.Parse(value).ToString("###,###,###,###.00") : "-"; break;
+                                    case 16:
+                                        if (value != "-")
+                                        {
+                                            item.perUnit = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.perUnit = "-";
+                                        }
+                                        break;
+                                    case 17:
+                                        if (value != "-")
+                                        {
+                                            item.totalJpy = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.totalJpy = "-";
+                                        }
+                                        break;
+                                    case 18:
+                                        if (value != "-")
+                                        {
+                                            item.totalThb = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.totalThb = "-";
+                                        }
+                                        break;
+                                    case 19:
+                                        if (value != "-")
+                                        {
+                                            item.averageFreight = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.averageFreight = "-";
+                                        }
+                                        break;
+                                    case 20:
+                                        if (value != "-")
+                                        {
+                                            item.averageInsurance = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.averageInsurance = "-";
+                                        }
+                                        break;
+                                    case 21:
+                                        if (value != "-")
+                                        {
+                                            item.totalJpy_1 = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.totalJpy_1 = "-";
+                                        }
+                                        break;
+                                    case 22:
+                                        if (value != "-")
+                                        {
+                                            item.totalThb_1 = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.totalThb_1 = "-";
+                                        }
+                                        break;
+                                    case 23:
+                                        if (value != "-")
+                                        {
+                                            item.perUnitThb = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.perUnitThb = "-";
+                                        }
+                                        break;
                                     case 24: item.cc = value; break;
-                                    case 25: item.totalOfCip = value != "-" ? Double.Parse(value).ToString("###,##.00") : "-"; break;
+                                    case 25:
+                                        if (value != "-")
+                                        {
+                                            item.totalOfCip = Double.Parse(value).ToString("###,###,###,###.00");
+                                        }
+                                        else
+                                        {
+                                            item.totalOfCip = "-";
+                                        }
+                                        break;
                                     case 26: item.budgetCode = value; break;
                                     case 27: item.prDieJig = value; break;
                                     case 28: item.model = value; break;
@@ -160,6 +242,7 @@ namespace cip_api.controllers
                     }
                     // return Ok(excelData);
                     db.CIP.AddRange(excelData);
+                    // return Ok(excelData);
                     db.SaveChanges();
                     // SENDING MAIL
                     // PermissionSchema acc_user = db.PERMISSIONS.Where<PermissionSchema>(item => item.empNo == username).FirstOrDefault();
@@ -295,7 +378,7 @@ namespace cip_api.controllers
             }
             catch (System.Exception e)
             {
-                Console.WriteLine(e.Source);
+                Console.WriteLine(e.Message);
                 return Problem(e.Message);
             }
         }
@@ -314,22 +397,24 @@ namespace cip_api.controllers
             List<cipSchema> returnData = new List<cipSchema>();
 
             List<string> multidept = deptCode.Split(',').ToList();
+
+            // Console.WriteLine(multidept.Count);
             foreach (string code in multidept)
             {
+                Console.WriteLine(code);
                 if (code != "55XX")
                 {
                     data = db.CIP.Where<cipSchema>(item => (item.status != "finished") && (item.cc == code || item.cipUpdate.costCenterOfUser == code)).ToList<cipSchema>();
                 }
                 else
                 { // 55XX
-                    data = db.CIP.Where<cipSchema>(item => item.cc.IndexOf("55") == 0 && item.status != "finished").ToList();
+                    data = db.CIP.Where<cipSchema>(item => item.cc.StartsWith("55") && item.status != "finished").ToList();
                     //    db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.IndexOf("55") == 0);
                 }
                 returnData.AddRange(data);
             }
-            // return Ok(data);
+            
             returnData = returnData.GroupBy(x => x.id).Select(x => x.First()).ToList();
-            // Console.WriteLine(returnData.Count);
             List<cipSchema> response = new List<cipSchema>();
 
             foreach (cipSchema cip in returnData)
@@ -364,19 +449,6 @@ namespace cip_api.controllers
                     }
                 }
             }
-            // List<cipUpdateSchema> cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == deptCode && item.status != "finish").ToList();
-
-            // if (cipUpdate.Count > 0)
-            // {
-            //     foreach (cipUpdateSchema item in cipUpdate)
-            //     {
-            //         cipSchema fromUpdate = db.CIP.Where<cipSchema>(cip => cip.id == item.cipSchemaid && cip.status == "cc-approved").FirstOrDefault();
-            //         if (fromUpdate != null)
-            //         {
-            //             data.Add(fromUpdate);
-            //         }
-            //     }
-            // }
             return Ok(new { success = true, data = response, });
         }
         [HttpGet("history")]
