@@ -225,7 +225,7 @@ namespace cip_api.controllers
             }
         }
 
-        [HttpGet("costCenter"), ]
+        [HttpGet("costCenter"),]
         public ActionResult costCenter(string user, string code)
         {
             string username = ""; string deptCode = "";
@@ -272,14 +272,14 @@ namespace cip_api.controllers
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cost-checked")
                         {
-                           ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
-                                                                 approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "cc-approved").FirstOrDefault();
+                            ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
+                                                                  approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "cc-approved").FirstOrDefault();
                             if (prepareDuplicatCheck == null)
                             {
                                 data.Add(dataItem);
                             }
                         }
-                        
+
 
                     }
                 }
@@ -307,12 +307,32 @@ namespace cip_api.controllers
                     {
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cc-approved")
-                        {
-                            ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
-                                                                  approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "save").FirstOrDefault();
-                            if (prepareDuplicatCheck == null)
+                        { // Tranfer cross dept
+
+                            if (dataItem.cc.StartsWith("55") && !cip_update.costCenterOfUser.StartsWith("55")
+                                || cip_update.costCenterOfUser.StartsWith("55") && !dataItem.cc.StartsWith("55")
+                                || dataItem.cc == "2130" && (cip_update.costCenterOfUser != "2140" || cip_update.costCenterOfUser != "9555")
+                                || dataItem.cc == "2140" && (cip_update.costCenterOfUser != "2130" || cip_update.costCenterOfUser != "9555")
+                                || dataItem.cc == "9555" && (cip_update.costCenterOfUser != "2140" || cip_update.costCenterOfUser != "2130")
+                                || dataItem.cc == "5610" && cip_update.costCenterOfUser != "5615"
+                                || dataItem.cc == "5615" && cip_update.costCenterOfUser != "5610"
+                                || dataItem.cc == "5650" && cip_update.costCenterOfUser != "9333"
+                                || dataItem.cc == "9333" && cip_update.costCenterOfUser != "5650"
+                                || dataItem.cc == "5670" && cip_update.costCenterOfUser != "9444"
+                                || dataItem.cc == "9444" && cip_update.costCenterOfUser != "5670"
+                                )
                             {
-                                data.Add(dataItem);
+                                List<PermissionSchema> mutipleUserCheck = db.PERMISSIONS.Where<PermissionSchema>(permission => permission.deptCode.Contains(dept) && permission.action == "prepare").ToList();
+
+                                ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
+                                                                      approve.cipSchemaid == dataItem.id && approve.onApproveStep == "save").FirstOrDefault();
+
+                                PermissionSchema findUser = mutipleUserCheck.Find(user => user.empNo == prepareDuplicatCheck.empNo);
+
+                                if (findUser == null)
+                                {
+                                    data.Add(dataItem);
+                                }
                             }
 
                         }
