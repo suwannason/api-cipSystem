@@ -413,7 +413,7 @@ namespace cip_api.controllers
                 }
                 returnData.AddRange(data);
             }
-            
+
             returnData = returnData.GroupBy(x => x.id).Select(x => x.First()).ToList();
             List<cipSchema> response = new List<cipSchema>();
 
@@ -454,8 +454,46 @@ namespace cip_api.controllers
         [HttpGet("history")]
         public ActionResult history()
         {
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "finish").ToList();
-            return Ok(new { success = true, data, });
+            string lastSixMonth = DateTime.Now.AddMonths(-6).ToString("yyyy/MM/dd");
+            string deptCode = User.FindFirst("deptCode")?.Value;
+            Console.WriteLine(lastSixMonth);
+            Console.WriteLine(deptCode);
+
+            List<string> multidept = deptCode.Split(',').ToList();
+
+            List<cipSchema> requester = new List<cipSchema>();
+            List<cipSchema> user = new List<cipSchema>();
+
+            foreach (string dept in multidept)
+            {
+                List<cipSchema> dataRequester = new List<cipSchema>();
+                List<cipSchema> dataUser = new List<cipSchema>();
+
+                if (dept == "55XX")
+                {
+                    dataRequester = db.CIP.Where<cipSchema>(item => item.cc.StartsWith("55") && String.Compare(item.createDate, lastSixMonth) > 0).ToList();
+                    dataUser = db.CIP.Where<cipSchema>(item => !item.cipUpdate.costCenterOfUser.StartsWith("55") && item.cipUpdate.costCenterOfUser.StartsWith("55") && String.Compare(item.createDate, lastSixMonth) > 0).ToList();
+                }
+                else
+                {
+                    dataRequester = db.CIP.Where<cipSchema>(item => item.cc == dept && String.Compare(item.createDate, lastSixMonth) > 0).ToList();
+                    dataUser = db.CIP.Where<cipSchema>(item => item.cc != dept && item.cipUpdate.costCenterOfUser == dept && String.Compare(item.createDate, lastSixMonth) > 0).ToList();
+                }
+                requester.AddRange(dataRequester);
+                user.AddRange(dataUser);
+            }
+            // List<cipSchema> data = db.CIP.Where<cipSchema>(item => String.Compare(item.createDate, lastSixMonth) > 0).ToList();
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    requester,
+                    user,
+                },
+            });
+
+
         }
 
         [HttpPatch("download")]
@@ -851,6 +889,9 @@ namespace cip_api.controllers
             cip.vendor = body.vendor;
             cip.vendorCode = body.vendorCode;
             cip.workType = body.workType;
+            cip.status = "draft";
+            cip.commend = null;
+
 
             db.CIP.Update(cip);
             db.SaveChanges();
