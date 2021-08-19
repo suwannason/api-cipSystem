@@ -30,7 +30,7 @@ namespace cip_api.controllers
             cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(body.id)).FirstOrDefault();
             cipSchema cip = db.CIP.Find(Int32.Parse(body.id));
 
-            cip.status = "draft";
+            // cip.status = "draft";
             cip.commend = null;
             db.CIP.Update(cip);
             if (cipUpdate == null)

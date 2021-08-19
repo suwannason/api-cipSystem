@@ -309,6 +309,7 @@ namespace cip_api.controllers
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cc-approved")
                         { // Tranfer cross dept
 
+
                             if (dataItem.cc.StartsWith("55") && !cip_update.costCenterOfUser.StartsWith("55")
                                 || cip_update.costCenterOfUser.StartsWith("55") && !dataItem.cc.StartsWith("55")
                                 || dataItem.cc == "2130" && (cip_update.costCenterOfUser != "2140" || cip_update.costCenterOfUser != "9555")
@@ -334,12 +335,17 @@ namespace cip_api.controllers
                                     data.Add(dataItem);
                                 }
                             }
+                            else
+                            {
+                                if (dataItem.cc != cip_update.costCenterOfUser)
+                                {
+                                    data.Add(dataItem);
+                                }
+                            }
 
                         }
                     }
                 }
-
-
             }
             if (checker != null)
             {
@@ -364,12 +370,25 @@ namespace cip_api.controllers
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cost-prepared")
                         {
+                            List<PermissionSchema> mutipleUserCheck = db.PERMISSIONS.Where<PermissionSchema>(permission => permission.deptCode.Contains(dept) && permission.action == "checker").ToList();
+
                             ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
-                                                                 approve.cipSchemaid == dataItem.id && approve.empNo == username && approve.onApproveStep == "cc-checked").FirstOrDefault();
+                                                                  approve.cipSchemaid == dataItem.id && approve.onApproveStep == "cost-checked").FirstOrDefault();
+
                             if (prepareDuplicatCheck == null)
                             {
                                 data.Add(dataItem);
                             }
+                            else
+                            {
+                                PermissionSchema findUser = mutipleUserCheck.Find(user => user.empNo == prepareDuplicatCheck.empNo);
+
+                                if (findUser == null)
+                                {
+                                    data.Add(dataItem);
+                                }
+                            }
+
 
                         }
                     }
@@ -527,7 +546,6 @@ namespace cip_api.controllers
 
                     foreach (string deptCodeItem in multidept)
                     {
-                        Console.WriteLine(data.cipUpdate.costCenterOfUser + " === " + deptCodeItem);
                         if (deptCodeItem == "55XX")
                         {
                             status = "cost-approved";
@@ -547,7 +565,6 @@ namespace cip_api.controllers
 
                     foreach (string deptCodeItem in multidept)
                     {
-                        Console.WriteLine(data.cipUpdate.costCenterOfUser + " === " + deptCodeItem);
                         if (deptCodeItem == "55XX")
                         {
                             status = "cost-prepared";

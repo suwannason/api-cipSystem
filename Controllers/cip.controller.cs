@@ -356,8 +356,30 @@ namespace cip_api.controllers
                         }
                         else
                         {
-                            cipUpdate = item;
+
+                            cipUpdate.planDate = item.planDate;
+                            cipUpdate.actDate = item.actDate;
+                            cipUpdate.result = item.result;
+                            cipUpdate.reasonDiff = item.reasonDiff;
+                            cipUpdate.fixedAssetCode = item.fixedAssetCode;
+                            cipUpdate.classFixedAsset = item.classFixedAsset;
+                            cipUpdate.fixAssetName = item.fixAssetName;
+                            cipUpdate.partNumberDieNo = item.partNumberDieNo;
+                            cipUpdate.serialNo = item.serialNo;
+                            cipUpdate.processDie = item.processDie;
+                            cipUpdate.model = item.model;
+                            cipUpdate.costCenterOfUser = item.costCenterOfUser;
+                            cipUpdate.tranferToSupplier = item.tranferToSupplier;
+                            cipUpdate.upFixAsset = item.upFixAsset;
+                            cipUpdate.newBFMorAddBFM = item.newBFMorAddBFM;
+                            cipUpdate.reasonForDelay = item.reasonForDelay;
+                            cipUpdate.addCipBfmNo = item.addCipBfmNo;
+                            cipUpdate.remark = item.remark;
+                            cipUpdate.boiType = item.boiType;
+
                             db.CIP_UPDATE.Update(cipUpdate);
+
+                            // List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == cipUpdate.cipSchemaid).ToList();
                         }
 
                         // if (item.cipSchemaid != 0)

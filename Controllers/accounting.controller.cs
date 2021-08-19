@@ -185,7 +185,8 @@ namespace cip_api.controllers
                         }
                         else
                         { // in cross tranfer
-                            message = "On Requester prepare";
+                        Console.WriteLine(item.cipNo);
+                            message = "On User prepare";
                         }
                     }
                     else if (item.status == "cost-approved")
@@ -218,7 +219,7 @@ namespace cip_api.controllers
                     }
                     else if (item.status == "draft")
                     {
-                        message = "On Requester drafted";
+                        message = "On Requester prepare";
                     }
                     returnData.Add(
                         new
@@ -385,9 +386,14 @@ namespace cip_api.controllers
                          || (item.cc == "9333" && item.cipUpdate.costCenterOfUser == "5650")
                          || (item.cc == "5670" && item.cipUpdate.costCenterOfUser == "9444")
                          || (item.cc == "9444" && item.cipUpdate.costCenterOfUser == "5670")
-                         || (item.cc.StartsWith("55") && item.cipUpdate.costCenterOfUser.StartsWith("55") && item.cipUpdate.result.ToLower() == "ng"))
+                         || (item.cc.StartsWith("55") && item.cipUpdate.costCenterOfUser.StartsWith("55")))
                         {
-                            returnData.Add(item);
+                            // Console.WriteLine(item.cipUpdate.result);
+                            if (item.cipUpdate.result == "NG")
+                            {
+                                returnData.Add(item);
+                            }
+                            
                         }
                     }
                     else if (item.status == "cost-approved")
