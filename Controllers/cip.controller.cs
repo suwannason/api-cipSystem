@@ -889,7 +889,7 @@ namespace cip_api.controllers
             cip.vendor = body.vendor;
             cip.vendorCode = body.vendorCode;
             cip.workType = body.workType;
-            cip.status = "draft";
+            // cip.status = "draft";
             cip.commend = null;
 
 
