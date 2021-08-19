@@ -32,7 +32,7 @@ namespace cip_api.controllers
 
             // cip.status = "draft";
             cip.commend = null;
-            db.CIP.Update(cip);
+
             if (cipUpdate == null)
             {
                 db.CIP_UPDATE.Add(
@@ -66,31 +66,103 @@ namespace cip_api.controllers
 
                 return Ok(new { success = true, message = "Confirm CIP success." });
             }
-            
+
             // string oldCostCenter = cipUpdate.costCenterOfUser;
             // string newCostCenter = body.costCenterOfUser;
 
-            cipUpdate.actDate = body.actDate;
-            cipUpdate.addCipBfmNo = body.addCipBfmNo;
-            cipUpdate.boiType = body.boiType;
-            cipUpdate.classFixedAsset = body.classFixedAsset;
-            cipUpdate.costCenterOfUser = body.costCenterOfUser;
-            cipUpdate.fixAssetName = body.fixAssetName;
-            cipUpdate.fixedAssetCode = body.fixedAssetCode;
-            cipUpdate.model = body.model;
-            cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
-            cipUpdate.partNumberDieNo = body.partNumberDieNo;
-            cipUpdate.planDate = body.planDate;
-            cipUpdate.processDie = body.processDie;
-            cipUpdate.reasonDiff = body.reasonDiff;
-            cipUpdate.reasonForDelay = body.reasonForDelay;
-            cipUpdate.remark = body.remark;
-            cipUpdate.result = body.result;
-            cipUpdate.serialNo = body.serialNo;
-            cipUpdate.tranferToSupplier = body.tranferToSupplier;
-            cipUpdate.upFixAsset = body.upFixAsset;
-            cipUpdate.status = "active";
+            if (cipUpdate.costCenterOfUser == body.costCenterOfUser)
+            {
+                cipUpdate.actDate = body.actDate;
+                cipUpdate.addCipBfmNo = body.addCipBfmNo;
+                cipUpdate.boiType = body.boiType;
+                cipUpdate.classFixedAsset = body.classFixedAsset;
+                cipUpdate.costCenterOfUser = body.costCenterOfUser;
+                cipUpdate.fixAssetName = body.fixAssetName;
+                cipUpdate.fixedAssetCode = body.fixedAssetCode;
+                cipUpdate.model = body.model;
+                cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
+                cipUpdate.partNumberDieNo = body.partNumberDieNo;
+                cipUpdate.planDate = body.planDate;
+                cipUpdate.processDie = body.processDie;
+                cipUpdate.reasonDiff = body.reasonDiff;
+                cipUpdate.reasonForDelay = body.reasonForDelay;
+                cipUpdate.remark = body.remark;
+                cipUpdate.result = body.result;
+                cipUpdate.serialNo = body.serialNo;
+                cipUpdate.tranferToSupplier = body.tranferToSupplier;
+                cipUpdate.upFixAsset = body.upFixAsset;
+                cipUpdate.status = "active";
+            }
+            else
+            {
+                if (
+                    body.costCenterOfUser == "2130" && (cipUpdate.costCenterOfUser == "2140" || cipUpdate.costCenterOfUser == "9555")
+                    || body.costCenterOfUser == "2410" && (cipUpdate.costCenterOfUser == "2130" || cipUpdate.costCenterOfUser == "9555")
+                    || body.costCenterOfUser == "9555" && (cipUpdate.costCenterOfUser == "2130" || cipUpdate.costCenterOfUser == "2140")
+                    || body.costCenterOfUser.StartsWith("55") && cipUpdate.costCenterOfUser.StartsWith("55")
+                    || body.costCenterOfUser == "5610" && cipUpdate.costCenterOfUser == "5619"
+                    || body.costCenterOfUser == "5619" && cipUpdate.costCenterOfUser == "5610"
+                    || body.costCenterOfUser == "5650" && (cipUpdate.costCenterOfUser == "5655" || cipUpdate.costCenterOfUser == "9333")
+                    || body.costCenterOfUser == "5655" && (cipUpdate.costCenterOfUser == "5650" || cipUpdate.costCenterOfUser == "9333")
+                    || body.costCenterOfUser == "9333" && (cipUpdate.costCenterOfUser == "5650" || cipUpdate.costCenterOfUser == "5655")
+                    || body.costCenterOfUser == "5670" && (cipUpdate.costCenterOfUser == "5675" || cipUpdate.costCenterOfUser == "9444")
+                    || body.costCenterOfUser == "5675" && (cipUpdate.costCenterOfUser == "5670" || cipUpdate.costCenterOfUser == "9444")
+                    || body.costCenterOfUser == "9444" && (cipUpdate.costCenterOfUser == "5670" || cipUpdate.costCenterOfUser == "5675")
+                    )
+                {
+                    cipUpdate.actDate = body.actDate;
+                    cipUpdate.addCipBfmNo = body.addCipBfmNo;
+                    cipUpdate.boiType = body.boiType;
+                    cipUpdate.classFixedAsset = body.classFixedAsset;
+                    cipUpdate.costCenterOfUser = body.costCenterOfUser;
+                    cipUpdate.fixAssetName = body.fixAssetName;
+                    cipUpdate.fixedAssetCode = body.fixedAssetCode;
+                    cipUpdate.model = body.model;
+                    cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
+                    cipUpdate.partNumberDieNo = body.partNumberDieNo;
+                    cipUpdate.planDate = body.planDate;
+                    cipUpdate.processDie = body.processDie;
+                    cipUpdate.reasonDiff = body.reasonDiff;
+                    cipUpdate.reasonForDelay = body.reasonForDelay;
+                    cipUpdate.remark = body.remark;
+                    cipUpdate.result = body.result;
+                    cipUpdate.serialNo = body.serialNo;
+                    cipUpdate.tranferToSupplier = body.tranferToSupplier;
+                    cipUpdate.upFixAsset = body.upFixAsset;
+                    cipUpdate.status = "active";
+                }
+                else
+                {
+                    cipUpdate.actDate = body.actDate;
+                    cipUpdate.addCipBfmNo = body.addCipBfmNo;
+                    cipUpdate.boiType = body.boiType;
+                    cipUpdate.classFixedAsset = body.classFixedAsset;
+                    cipUpdate.costCenterOfUser = body.costCenterOfUser;
+                    cipUpdate.fixAssetName = body.fixAssetName;
+                    cipUpdate.fixedAssetCode = body.fixedAssetCode;
+                    cipUpdate.model = body.model;
+                    cipUpdate.newBFMorAddBFM = body.newBFMorAddBFM;
+                    cipUpdate.partNumberDieNo = body.partNumberDieNo;
+                    cipUpdate.planDate = body.planDate;
+                    cipUpdate.processDie = body.processDie;
+                    cipUpdate.reasonDiff = body.reasonDiff;
+                    cipUpdate.reasonForDelay = body.reasonForDelay;
+                    cipUpdate.remark = body.remark;
+                    cipUpdate.result = body.result;
+                    cipUpdate.serialNo = body.serialNo;
+                    cipUpdate.tranferToSupplier = body.tranferToSupplier;
+                    cipUpdate.upFixAsset = body.upFixAsset;
+                    cipUpdate.status = "active";
 
+                    // cip.status = "cc-approved";
+                    List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
+                    item.cipSchemaid == cipUpdate.cipSchemaid && (item.onApproveStep.Contains("cost"))
+                    ).ToList();
+
+                    db.APPROVAL.RemoveRange(approve);
+                }
+            }
+            db.CIP.Update(cip);
             db.CIP_UPDATE.Update(cipUpdate);
 
             db.SaveChanges();

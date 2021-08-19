@@ -221,6 +221,10 @@ namespace cip_api.controllers
                     {
                         message = "On Requester prepare";
                     }
+                    else if (item.status == "cost-prepared")
+                    {
+                        message = "On cost center check";
+                    }
                     returnData.Add(
                         new
                         {
