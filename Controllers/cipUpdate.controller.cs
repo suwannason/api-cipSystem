@@ -28,10 +28,36 @@ namespace cip_api.controllers
         public ActionResult update(cipUpdateEdit body)
         {
             cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.cipSchemaid == Int32.Parse(body.id)).FirstOrDefault();
-            cipSchema cip = db.CIP.Find(Int32.Parse(body.id));
 
+            if (
+                body.fixAssetName == cipUpdate.fixAssetName
+                && body.fixedAssetCode == cipUpdate.fixedAssetCode
+                && body.actDate == cipUpdate.actDate
+                && body.addCipBfmNo == cipUpdate.addCipBfmNo
+                && body.boiType == cipUpdate.boiType
+                && body.classFixedAsset == cipUpdate.classFixedAsset
+                && body.costCenterOfUser == cipUpdate.costCenterOfUser
+                && body.model == cipUpdate.model
+                && body.newBFMorAddBFM == cipUpdate.newBFMorAddBFM
+                && body.partNumberDieNo == cipUpdate.partNumberDieNo
+                && body.planDate == cipUpdate.planDate
+                && body.processDie == cipUpdate.processDie
+                && body.reasonDiff == cipUpdate.reasonDiff
+                && body.reasonForDelay == cipUpdate.reasonForDelay
+                && body.remark == cipUpdate.remark
+                && body.result == cipUpdate.result
+                && body.serialNo == cipUpdate.serialNo
+                && body.tranferToSupplier == cipUpdate.tranferToSupplier
+                && body.upFixAsset == cipUpdate.upFixAsset
+               )
+            {
+                return Ok(new { success = true, message = "Not update" });
+            }
+
+            cipSchema cip = db.CIP.Find(Int32.Parse(body.id));
             // cip.status = "draft";
             cip.commend = null;
+            cip.status = "cc-approved";
 
             if (cipUpdate == null)
             {
@@ -67,9 +93,6 @@ namespace cip_api.controllers
                 return Ok(new { success = true, message = "Confirm CIP success." });
             }
 
-            // string oldCostCenter = cipUpdate.costCenterOfUser;
-            // string newCostCenter = body.costCenterOfUser;
-
             if (cipUpdate.costCenterOfUser == body.costCenterOfUser)
             {
                 cipUpdate.actDate = body.actDate;
@@ -92,6 +115,8 @@ namespace cip_api.controllers
                 cipUpdate.tranferToSupplier = body.tranferToSupplier;
                 cipUpdate.upFixAsset = body.upFixAsset;
                 cipUpdate.status = "active";
+                List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item => item.cipSchemaid == cipUpdate.cipSchemaid && (item.onApproveStep.StartsWith("cost"))).ToList();
+                db.APPROVAL.RemoveRange(approve);
             }
             else
             {
@@ -156,9 +181,7 @@ namespace cip_api.controllers
 
                     // cip.status = "cc-approved";
                     List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
-                    item.cipSchemaid == cipUpdate.cipSchemaid && (item.onApproveStep.Contains("cost"))
-                    ).ToList();
-
+                    item.cipSchemaid == cipUpdate.cipSchemaid && (item.onApproveStep.StartsWith("cost"))).ToList();
                     db.APPROVAL.RemoveRange(approve);
                 }
             }

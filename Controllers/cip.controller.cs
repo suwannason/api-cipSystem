@@ -825,7 +825,8 @@ namespace cip_api.controllers
                     else
                     {
                         List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
-                               item.id == Int32.Parse(id) && (item.onApproveStep == "cost-checked" || item.onApproveStep == "cost-prepared")).ToList();
+                               item.cipSchemaid == Int32.Parse(id) && item.onApproveStep.StartsWith("cost")).ToList();
+                        
                         removeApproveHistory.AddRange(approve);
                         cip.commend = body.commend;
                         cip.status = "cc-approved";
