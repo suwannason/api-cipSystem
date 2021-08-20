@@ -351,10 +351,29 @@ namespace cip_api.controllers
         [HttpPatch("history"), AllowAnonymous]
         public ActionResult getHistory(request.getHistory body)
         {
+            string lastSixMonth = DateTime.Now.AddMonths(-6).ToString("yyyy/MM/dd");
 
-            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "exported" && item.workType == body.workType).OrderBy(x => x.id).Skip((body.page - 1) * body.perPage).Take(body.perPage).ToList();
-            // List<cipSchema> all = db.CIP.Where<cipSchema>(item => true).OrderBy(x => x.id).Skip((body.page - 1) * body.perPage).Take(body.perPage).ToList();
+            List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "exported" && item.workType == body.workType && String.Compare(item.createDate, lastSixMonth) > 0).ToList();
             return Ok(new { success = true, message = "History data", data, });
+        }
+
+        [HttpGet("history"), AllowAnonymous]
+        public ActionResult getAllexportHistory()
+        {
+
+            try
+            {
+                string lastSixMonth = DateTime.Now.AddMonths(-6).ToString("yyyy/MM/dd");
+                // String.Compare(item.createDate, lastSixMonth) > 0
+
+                List<cipSchema> data = db.CIP.Where<cipSchema>(item => item.status == "exported" && String.Compare(item.createDate, lastSixMonth) > 0).ToList();
+
+                return Ok(new { success = true, data, });
+            }
+            catch (System.Exception e)
+            {
+                return Conflict(e.StackTrace);
+            }
         }
     }
 }

@@ -478,8 +478,6 @@ namespace cip_api.controllers
         {
             string lastSixMonth = DateTime.Now.AddMonths(-6).ToString("yyyy/MM/dd");
             string deptCode = User.FindFirst("deptCode")?.Value;
-            Console.WriteLine(lastSixMonth);
-            Console.WriteLine(deptCode);
 
             List<string> multidept = deptCode.Split(',').ToList();
 

@@ -250,6 +250,68 @@ namespace cip_api.controllers
             string message = "";
             string permissions_page = "";
 
+            if (prepare != null)
+            {
+                List<string> multidept = deptCode.Split(',').ToList();
+                message = "CIP on Cost center prepare. (" + deptCode + " )";
+                permissions_page = "prepare";
+
+                foreach (string dept in multidept)
+                {
+                    List<cipUpdateSchema> cipUpdate = new List<cipUpdateSchema>();
+                    if (dept == "55XX")
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser.StartsWith("55") && item.status == "active").ToList();
+                    }
+                    else
+                    {
+                        cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(item => item.costCenterOfUser == dept && item.status == "active").ToList();
+                    }
+
+                    foreach (cipUpdateSchema cip_update in cipUpdate)
+                    {
+                        cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
+                        if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cc-approved")
+                        { // Tranfer cross dept
+
+
+                            if (dataItem.cc.StartsWith("55") && !cip_update.costCenterOfUser.StartsWith("55")
+                                || cip_update.costCenterOfUser.StartsWith("55") && !dataItem.cc.StartsWith("55")
+                                || dataItem.cc == "2130" && (cip_update.costCenterOfUser != "2140" || cip_update.costCenterOfUser != "9555")
+                                || dataItem.cc == "2140" && (cip_update.costCenterOfUser != "2130" || cip_update.costCenterOfUser != "9555")
+                                || dataItem.cc == "9555" && (cip_update.costCenterOfUser != "2140" || cip_update.costCenterOfUser != "2130")
+                                || dataItem.cc == "5610" && cip_update.costCenterOfUser != "5615"
+                                || dataItem.cc == "5615" && cip_update.costCenterOfUser != "5610"
+                                || dataItem.cc == "5650" && cip_update.costCenterOfUser != "9333"
+                                || dataItem.cc == "9333" && cip_update.costCenterOfUser != "5650"
+                                || dataItem.cc == "5670" && cip_update.costCenterOfUser != "9444"
+                                || dataItem.cc == "9444" && cip_update.costCenterOfUser != "5670"
+                                )
+                            {
+                                List<PermissionSchema> mutipleUserCheck = db.PERMISSIONS.Where<PermissionSchema>(permission => permission.deptCode.Contains(dept) && permission.action == "prepare").ToList();
+
+                                ApprovalSchema prepareDuplicatCheck = db.APPROVAL.Where<ApprovalSchema>(approve =>
+                                                                      approve.cipSchemaid == dataItem.id && approve.onApproveStep == "save").FirstOrDefault();
+
+                                PermissionSchema findUser = mutipleUserCheck.Find(user => user.empNo == prepareDuplicatCheck.empNo);
+
+                                if (findUser == null)
+                                {
+                                    data.Add(dataItem);
+                                }
+                            }
+                            else
+                            {
+                                if (dataItem.cc != cip_update.costCenterOfUser)
+                                {
+                                    data.Add(dataItem);
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
             if (approver != null)
             {
                 List<string> multidept = deptCode.Split(',').ToList();
@@ -395,7 +457,6 @@ namespace cip_api.controllers
                 }
 
             }
-
 
             /* Handle message */
 
