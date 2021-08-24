@@ -735,7 +735,6 @@ namespace cip_api.controllers
                 foreach (Int32 id in body.id)
                 {
                     cipSchema data = db.CIP.Find(id);
-
                     if (data != null)
                     {
                         data.status = "reject";

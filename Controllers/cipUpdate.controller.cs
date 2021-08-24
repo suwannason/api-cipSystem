@@ -57,7 +57,16 @@ namespace cip_api.controllers
             cipSchema cip = db.CIP.Find(Int32.Parse(body.id));
             // cip.status = "draft";
             cip.commend = null;
-            cip.status = "cc-approved";
+            string deptCode = User.FindFirst("deptCode")?.Value;
+            if (deptCode.Contains(cipUpdate.costCenterOfUser))
+            {
+                cip.status = "cc-approved";
+            }
+            else
+            {
+                cip.status = "draft";
+            }
+
 
             if (cipUpdate == null)
             {
