@@ -237,6 +237,11 @@ namespace cip_api.controllers
                                 {
                                     excelData.Add(item);
                                 }
+                                else
+                                {
+                                    Console.WriteLine("duplicated");
+                                    return BadRequest(new { success = false, message = "Some data duplicatied." });
+                                }
                             }
                         }
                     }
@@ -648,7 +653,7 @@ namespace cip_api.controllers
                              item.cipUpdate?.classFixedAsset, item.cipUpdate?.fixAssetName, item.cipUpdate?.serialNo, item.cipUpdate?.partNumberDieNo,
                              item.cipUpdate?.processDie, item.cipUpdate?.model, item.cipUpdate?.costCenterOfUser, item.cipUpdate?.tranferToSupplier,
                              item.cipUpdate?.upFixAsset, item.cipUpdate?.newBFMorAddBFM, item.cipUpdate?.reasonForDelay,
-                             item.cipUpdate?.addCipBfmNo, item.cipUpdate?.remark, item.cipUpdate?.boiType
+                             (item.cipUpdate?.addCipBfmNo == "-") ? "" : item.cipUpdate?.addCipBfmNo, item.cipUpdate?.remark, (item.cipUpdate?.boiType == "-") ? "" : item.cipUpdate?.boiType
                         }
 
                     };
@@ -823,7 +828,7 @@ namespace cip_api.controllers
                     {
                         List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(item =>
                                item.cipSchemaid == Int32.Parse(id) && item.onApproveStep.StartsWith("cost")).ToList();
-                        
+
                         removeApproveHistory.AddRange(approve);
                         cip.commend = body.commend;
                         cip.status = "cc-approved";

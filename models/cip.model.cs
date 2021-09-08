@@ -31,7 +31,7 @@ namespace cip_api.models
         [Column(TypeName = "nvarchar"), StringLength(15)]
         public string vendorCode { get; set; }
 
-        [Column(TypeName = "nvarchar"), StringLength(40)]
+        [Column(TypeName = "nvarchar"), StringLength(80)]
         public string vendor { get; set; }
 
         [Column(TypeName = "nvarchar"), StringLength(10)]

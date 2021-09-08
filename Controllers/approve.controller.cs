@@ -252,7 +252,6 @@ namespace cip_api.controllers
 
             if (prepare != null)
             {
-                Console.WriteLine("prepare");
                 List<string> multidept = deptCode.Split(',').ToList();
                 message = "CIP on Cost center prepare. (" + deptCode + " )";
                 permissions_page = "prepare";
@@ -274,8 +273,7 @@ namespace cip_api.controllers
                         cipSchema dataItem = db.CIP.Find(cip_update.cipSchemaid);
                         if (dataItem.cc != cip_update.costCenterOfUser && dataItem.status == "cc-approved")
                         { // Tranfer cross dept
-
-                            if (dataItem.cc.StartsWith("55") && !cip_update.costCenterOfUser.StartsWith("55")
+                            if (dataItem.cc.StartsWith("55") && cip_update.costCenterOfUser.StartsWith("55")
                                 || (cip_update.costCenterOfUser.StartsWith("55") && !dataItem.cc.StartsWith("55"))
                                 || (dataItem.cc == "2130" && (cip_update.costCenterOfUser == "2140" || cip_update.costCenterOfUser == "9555"))
                                 || (dataItem.cc == "2140" && (cip_update.costCenterOfUser == "2130" || cip_update.costCenterOfUser == "9555"))
@@ -723,8 +721,8 @@ namespace cip_api.controllers
                              item.cipUpdate.planDate, item.cipUpdate.actDate, item.cipUpdate.result, item.cipUpdate.reasonDiff, item.cipUpdate.fixedAssetCode,
                              item.cipUpdate.classFixedAsset, item.cipUpdate.fixAssetName, item.cipUpdate.serialNo,
                              item.cipUpdate.partNumberDieNo, item.cipUpdate.processDie, item.cipUpdate.model, item.cipUpdate.costCenterOfUser,
-                             item.cipUpdate.tranferToSupplier, item.cipUpdate.upFixAsset, item.cipUpdate.newBFMorAddBFM, item.cipUpdate.reasonForDelay, item.cipUpdate.addCipBfmNo,
-                             item.cipUpdate.remark, item.cipUpdate.boiType
+                             item.cipUpdate.tranferToSupplier, item.cipUpdate.upFixAsset, item.cipUpdate.newBFMorAddBFM, item.cipUpdate.reasonForDelay, (item.cipUpdate.addCipBfmNo == "-") ? "" : item.cipUpdate.addCipBfmNo,
+                             item.cipUpdate.remark, (item.cipUpdate?.boiType == "-") ? "" : item.cipUpdate?.boiType
                         }
 
                     };
@@ -1051,7 +1049,7 @@ namespace cip_api.controllers
                              item.cipUpdate.reasonDiff, item.cipUpdate.fixedAssetCode, item.cipUpdate.classFixedAsset, item.cipUpdate.fixAssetName, item.cipUpdate.serialNo,
                              item.cipUpdate.partNumberDieNo, item.cipUpdate.processDie, item.cipUpdate.model, item.cipUpdate.costCenterOfUser,
                              item.cipUpdate.tranferToSupplier, item.cipUpdate.upFixAsset, item.cipUpdate.newBFMorAddBFM, item.cipUpdate.reasonForDelay,
-                             item.cipUpdate.addCipBfmNo, item.cipUpdate.remark, item.cipUpdate.boiType
+                             (item.cipUpdate.addCipBfmNo == "-") ? "" : item.cipUpdate.addCipBfmNo, item.cipUpdate.remark, (item.cipUpdate?.boiType == "-") ? "" : item.cipUpdate?.boiType
                         }
 
                     };

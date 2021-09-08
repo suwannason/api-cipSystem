@@ -58,7 +58,15 @@ namespace cip_api.controllers
             // cip.status = "draft";
             cip.commend = null;
             string deptCode = User.FindFirst("deptCode")?.Value;
-            if (deptCode.Contains(cipUpdate.costCenterOfUser))
+            if (cip.status == "reject")
+            {
+                cip.status = "draft";
+            }
+            else if (deptCode.Contains(cipUpdate.costCenterOfUser))
+            {
+                cip.status = "cc-approved";
+            }
+            else if (cipUpdate.costCenterOfUser.StartsWith("55") && deptCode.StartsWith("55"))
             {
                 cip.status = "cc-approved";
             }

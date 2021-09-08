@@ -190,7 +190,7 @@ namespace cip_api.controllers
                                     worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.upFixAsset;
                                     worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
                                     worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
-                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AS" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
                                     worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Domestic-DIE")
@@ -214,7 +214,7 @@ namespace cip_api.controllers
                                     worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.upFixAsset;
                                     worksheet.Cells["AU" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
                                     worksheet.Cells["AV" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
-                                    worksheet.Cells["AW" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AW" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
                                     worksheet.Cells["AX" + rowNumber].Value = cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Oversea")
@@ -253,7 +253,7 @@ namespace cip_api.controllers
                                     worksheet.Cells["BB" + rownum].Value = cip.cipUpdate.upFixAsset;
                                     worksheet.Cells["BC" + rownum].Value = cip.cipUpdate.newBFMorAddBFM;
                                     worksheet.Cells["BD" + rownum].Value = cip.cipUpdate.reasonForDelay;
-                                    // worksheet.Cells["AM" + rownum].Value = cip.cipUpdate.addCipBfmNo;
+                                    // worksheet.Cells["AM" + rownum].Value = (item.cipUpdate.addCipBfmNo == "-") ? "" : item.cipUpdate.addCipBfmNo;
                                     worksheet.Cells["BE" + rownum].Value = cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Domestic")
@@ -280,7 +280,7 @@ namespace cip_api.controllers
                                     worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.upFixAsset;
                                     worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
                                     worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
-                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AM" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
                                     worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Project-MSC")
@@ -304,7 +304,7 @@ namespace cip_api.controllers
                                     worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.upFixAsset;
                                     worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
                                     worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
-                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.addCipBfmNo;
+                                    worksheet.Cells["AS" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
                                     worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.remark;
                                 }
 
