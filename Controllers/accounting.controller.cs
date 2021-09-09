@@ -285,46 +285,63 @@ namespace cip_api.controllers
 
             List<PermissionSchema> permissions = GetPermissions(username);
 
-            PermissionSchema checker = permissions.Find(e => e.action == "checker");
+            PermissionSchema checker = permissions.Find(e => e.action == "checker" || e.action == "prepare");
             PermissionSchema approver = permissions.Find(e => e.action == "approver");
 
             string status = "";
             List<int> notUpdate = new List<int>();
 
             List<cipSchema> updateItem = new List<cipSchema>();
+
+            List<ApprovalSchema> approveDiff = new List<ApprovalSchema>();
             foreach (string item in body.id)
             {
                 Int32 id = Int32.Parse(item);
                 cipSchema cip = db.CIP.Find(id);
+
                 db.CIP_UPDATE.Where<cipUpdateSchema>(row => row.cipSchemaid == id).FirstOrDefault();
+                string approveStep = "";
 
                 if (cip.status == "acc-checked" && (approver != null || checker != null))
                 {
                     status = "acc-approved";
+                    approveStep = "diff-approved";
                 }
                 else if (cip.status == "itc-confirmed" && (approver != null || checker != null))
                 {
                     status = "acc-checked";
+                    approveStep = "diff-checked";
                 }
                 else if (cip.status == "cc-approved" && (approver != null || checker != null))
                 {
                     if (cip.cc == cip.cipUpdate.costCenterOfUser && cip.cipUpdate.tranferToSupplier == "-")
                     {
                         status = "acc-checked";
+                        approveStep = "diff-checked";
                     }
                 }
                 else if (cip.status == "cost-approved" && (approver != null || checker != null))
                 {
                     status = "acc-checked";
+                    approveStep = "diff-checked";
                 }
                 else
                 {
                     notUpdate.Add(id);
                     continue;
                 }
+                approveDiff.Add(
+                    new ApprovalSchema {
+                        cipSchemaid = cip.id,
+                        date = DateTime.Now.ToString("yyyy/MM/dd"),
+                        empNo = username,
+                        onApproveStep = approveStep,
+                    }
+                );
                 cip.status = status;
                 updateItem.Add(cip);
             }
+            db.APPROVAL.AddRange(approveDiff);
             db.CIP.UpdateRange(updateItem);
             db.SaveChanges();
 
@@ -500,8 +517,12 @@ namespace cip_api.controllers
         {
             try
             {
+                string username = User.FindFirst("username")?.Value;
+
                 List<cipSchema> cipUpdateItem = new List<cipSchema>();
                 List<cipUpdateSchema> refCip = new List<cipUpdateSchema>();
+
+                List<ApprovalSchema> finishCIP = new List<ApprovalSchema>();
 
                 foreach (string item in body.id)
                 {
@@ -512,9 +533,17 @@ namespace cip_api.controllers
                     cipUpdate.status = "finished";
                     cip.status = "finished";
 
+                    finishCIP.Add(new ApprovalSchema {
+                        cipSchemaid = cip.id,
+                        date = DateTime.Now.ToString("yyyy/MM/dd"),
+                        empNo = username,
+                        onApproveStep = "acc-finished",
+                    });
+
                     refCip.Add(cipUpdate);
                     cipUpdateItem.Add(cip);
                 }
+                db.APPROVAL.AddRange(finishCIP);
                 db.CIP.UpdateRange(cipUpdateItem);
                 db.CIP_UPDATE.UpdateRange(refCip);
                 db.SaveChanges();

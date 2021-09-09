@@ -636,6 +636,29 @@ namespace cip_api.controllers
                     worksheet.Cells["A2:AV2"].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
                     worksheet.Cells["A2:AV2"].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
 
+                    worksheet.Cells["AW2"].Value = "Requester \n prepare";
+                    worksheet.Column(49).Width = 23;
+                    worksheet.Cells["AX2"].Value = "Requester \n check";
+                    worksheet.Column(50).Width = 23;
+                    worksheet.Cells["AY2"].Value = "Requester \n approve";
+                    worksheet.Column(51).Width = 23;
+
+                    worksheet.Cells["AZ2"].Value = "User \n prepare";
+                    worksheet.Column(52).Width = 23;
+                    worksheet.Cells["BA2"].Value = "User \n check";
+                    worksheet.Column(53).Width = 23;
+                    worksheet.Cells["BB2"].Value = "User \n approve";
+                    worksheet.Column(54).Width = 23;
+
+                    worksheet.Cells["BC2"].Value = "ITC \n BOI";
+                    worksheet.Column(55).Width = 23;
+
+                    worksheet.Cells["BD2"].Value = "ACC check diff budget";
+                    worksheet.Column(56).Width = 23;
+
+                    worksheet.Cells["BE2"].Value = "ACC approve diff budget";
+                    worksheet.Column(57).Width = 23;
+
                     int row = 3;
                     foreach (cipSchema item in data)
                     {
@@ -679,10 +702,77 @@ namespace cip_api.controllers
                         worksheet.Cells["AI" + row + ":AV" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
                         // set pink row space
                         worksheet.Cells[row, 1].LoadFromArrays(cellData);
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+
+                        List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(approve => approve.cipSchemaid == item.id).ToList();
+
+                        ApprovalSchema save = approve.Find(action => action.onApproveStep == "save");
+                        if (save != null)
+                        {
+                            userSchema userSave = db.USERS.Find(save.empNo);
+                            worksheet.Cells["AW" + row].Value = userSave.name;
+                        }
+
+                        ApprovalSchema ccCheck = approve.Find(action => action.onApproveStep == "cc-checked");
+
+                        if (ccCheck != null)
+                        {
+                            userSchema userCheck = db.USERS.Find(ccCheck.empNo);
+                            worksheet.Cells["AX" + row].Value = userCheck.name;
+                        }
+
+                        ApprovalSchema ccApprove = approve.Find(action => action.onApproveStep == "cc-approved");
+
+                        if (ccApprove != null)
+                        {
+                            userSchema userApprove = db.USERS.Find(ccApprove.empNo);
+                            worksheet.Cells["AY" + row].Value = userApprove.name;
+                        }
+
+                        ApprovalSchema costPrepare = approve.Find(action => action.onApproveStep == "cost-prepared");
+                        if (costPrepare != null)
+                        {
+                            userSchema userCostPrepare = db.USERS.Find(costPrepare.empNo);
+                            worksheet.Cells["AZ" + row].Value = userCostPrepare.name;
+                        }
+                        ApprovalSchema costCheck = approve.Find(action => action.onApproveStep == "cost-checked");
+                        if (costCheck != null)
+                        {
+                            userSchema costUserCheck = db.USERS.Find(costCheck.empNo);
+                            worksheet.Cells["BA" + row].Value = costUserCheck.name;
+                        }
+                        ApprovalSchema costApprove = approve.Find(action => action.onApproveStep == "cost-approved");
+                        if (costApprove != null)
+                        {
+                            userSchema costUserApprove = db.USERS.Find(costApprove.empNo);
+                            worksheet.Cells["BB" + row].Value = costUserApprove.name;
+                        }
+
+                        ApprovalSchema itcConfirm = approve.Find(action => action.onApproveStep == "itc-confirmed");
+
+                        if (itcConfirm != null)
+                        {
+                            userSchema itcConfirmUser = db.USERS.Find(itcConfirm.empNo);
+                        }
+                        ApprovalSchema diffChecked = approve.Find(action => action.onApproveStep == "diff-checked");
+                        if (diffChecked != null)
+                        {
+                            userSchema accDiffChecker = db.USERS.Find(diffChecked.empNo);
+                            worksheet.Cells["BD" + row].Value = accDiffChecker.name;
+                        }
+
+                        ApprovalSchema diffApproved = approve.Find(action => action.onApproveStep == "diff-approved");
+                        if (diffApproved != null)
+                        {
+                            userSchema diffApproveUser = db.USERS.Find(diffApproved.empNo);
+                            worksheet.Cells["BE" + row].Value = diffApproveUser.name;
+                        }
+                        worksheet.Cells["AW2:BE2"].Style.Fill.SetBackground(ColorTranslator.FromHtml("#A9F3E1"));
+
+
                         row = row + 1;
                     }
                     string fileName = System.Guid.NewGuid().ToString() + "-" + DateTime.Now.ToString("yyyy-MM-dd") + ".xlsx";

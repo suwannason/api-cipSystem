@@ -8,6 +8,8 @@ using cip_api.models;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using OfficeOpenXml;
+using System.IO;
 
 namespace cip_api.controllers
 {
@@ -136,6 +138,55 @@ namespace cip_api.controllers
                 return Problem(e.Message);
             }
 
+        }
+
+        [HttpPost("upload"), Consumes("multipart/form-data")]
+        public ActionResult confirmWithUpload(FileUpload body)
+        {
+            try
+            {
+                string rootFolder = Directory.GetCurrentDirectory();
+                string pathString2 = @"\API site\files\CIP-system\upload\";
+                string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
+
+                if (!Directory.Exists(serverPath))
+                {
+                    Directory.CreateDirectory(serverPath);
+                }
+
+                string fileName = System.Guid.NewGuid().ToString() + "-" + body.file.FileName;
+                FileStream strem = System.IO.File.Create($"{serverPath}{fileName}");
+                body.file.CopyTo(strem);
+                strem.Close();
+
+                string path = $"{serverPath}{fileName}";
+                FileInfo Existfile = new FileInfo(path);
+
+                using (ExcelPackage excel = new ExcelPackage(Existfile))
+                {
+                    ExcelWorkbook workbook = excel.Workbook;
+                    ExcelWorksheet sheet = workbook.Worksheets[0];
+
+                    int colCount = sheet.Dimension.End.Column;
+                    int rowCount = sheet.Dimension.End.Row;
+
+                    for (int row = 3; row <= rowCount; row += 1)
+                    {
+                        for (int col = 1; col < colCount; col += 1)
+                        {
+                            switch (col)
+                            {
+                                case 1: Console.WriteLine(""); break;
+                            }
+                        }
+                    }
+                }
+                return Ok(new { success = true, message = "ITC confirm success." });
+            }
+            catch (System.Exception e)
+            {
+                return Problem(e.StackTrace);
+            }
         }
     }
 }

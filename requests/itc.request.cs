@@ -12,4 +12,8 @@ namespace cip_api.request
         public System.Int32 id { get; set; }
         public string boiType { get; set; }
     }
+    public class FileUpload
+    {
+        public Microsoft.AspNetCore.Http.IFormFile file { get; set; }
+    }
 }
