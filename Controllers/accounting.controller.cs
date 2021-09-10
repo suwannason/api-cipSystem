@@ -410,7 +410,7 @@ namespace cip_api.controllers
                          || (item.cc.StartsWith("55") && item.cipUpdate.costCenterOfUser.StartsWith("55")))
                         {
                             // Console.WriteLine(item.cipUpdate.result);
-                            if (item.cipUpdate.result == "NG")
+                            if (item.cipUpdate.result == "NG" && (item.cipUpdate.costCenterOfUser != "5110" && item.cipUpdate.tranferToSupplier != "-"))
                             {
                                 returnData.Add(item);
                             }
@@ -419,7 +419,7 @@ namespace cip_api.controllers
                     }
                     else if (item.status == "cost-approved")
                     {
-                        if (item.cipUpdate.result.ToLower() == "ng")
+                        if (item.cipUpdate.result.ToLower() == "ng" && (item.cipUpdate.costCenterOfUser != "5110" && item.cipUpdate.tranferToSupplier != "-"))
                         {
                             returnData.Add(item);
                         }

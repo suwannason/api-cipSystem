@@ -1087,6 +1087,11 @@ namespace cip_api.controllers
                         newOrAddBFM.Formula.Values.Add("Add BFM");
                         newOrAddBFM.Formula.Values.Add("NEW BFM");
 
+                        IExcelDataValidationList boiType = worksheet.DataValidations.AddListValidation("AV" + row);
+                        boiType.Formula.Values.Add("-");
+                        boiType.Formula.Values.Add("BOI");
+                        boiType.Formula.Values.Add("NON BOI");
+
                         worksheet.Cells["AF" + row].Formula = "=+IF(AI" + row + "=\"\",\"\",IF(Z" + row + "=\"\",\"\",IF(AND(MID(Z" + row + ",5,2)=\"09\",LEFT(AI" + row + ",2)=\"06\"),\"OK\",IF(AND(OR(MID(Z" + row + ",5,2)=\"31\",MID(Z" + row + ",5,2)=\"34\"),LEFT(AI" + row + ",2)=\"28\"),\"OK\",IF(MID(Z" + row + ",5,2)=LEFT(AI" + row + ",2),\"OK\",\"NG\")))))";
                         worksheet.Cells["AF" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#C8C5C5"));
                         worksheet.Cells["AH" + row].Formula = "=IF(LEFT(AI3,2)=\"28\",\"SOFTWARE\",IF(LEFT(AI" + row + ",2)=\"02\",\"BUILDING\",IF(LEFT(AI" + row + ",2)=\"03\",\"STRUCTURE\",IF(LEFT(AI" + row + ",2)=\"04\",\"MACHINE\",IF(LEFT(AI" + row + ",2)=\"05\",\"VEHICLE\",IF(LEFT(AI" + row + ",2)=\"06\",\"TOOLS\",IF(LEFT(AI" + row + ",2)=\"07\",\"FURNITURE\",IF(LEFT(AI" + row + ",2)=\"08\",\"DIES\",\"\"))))))))";
@@ -1098,10 +1103,10 @@ namespace cip_api.controllers
                         worksheet.Cells["AI" + row + ":AV" + row].Style.Fill.SetBackground(ColorTranslator.FromHtml("#F0CDE5"));
                         // set pink row space
                         worksheet.Cells[row, 1].LoadFromArrays(cellData);
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        worksheet.Cells["A" + row + ":AV" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                        worksheet.Cells["A" + row + ":BE" + row].Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
 
                         List<ApprovalSchema> approve = db.APPROVAL.Where<ApprovalSchema>(approve => approve.cipSchemaid == item.id).ToList();
 

@@ -141,10 +141,12 @@ namespace cip_api.controllers
         }
 
         [HttpPost("upload"), Consumes("multipart/form-data")]
-        public ActionResult confirmWithUpload(FileUpload body)
+        public ActionResult confirmWithUpload([FromForm] FileUpload body)
         {
             try
             {
+                string username = User.FindFirst("username")?.Value;
+
                 string rootFolder = Directory.GetCurrentDirectory();
                 string pathString2 = @"\API site\files\CIP-system\upload\";
                 string serverPath = rootFolder.Substring(0, rootFolder.LastIndexOf(@"\")) + pathString2;
@@ -162,6 +164,10 @@ namespace cip_api.controllers
                 string path = $"{serverPath}{fileName}";
                 FileInfo Existfile = new FileInfo(path);
 
+                List<cipUpdateSchema> updateItem = new List<cipUpdateSchema>();
+                List<cipSchema> updateCip = new List<cipSchema>();
+                List<ApprovalSchema> approve = new List<ApprovalSchema>();
+
                 using (ExcelPackage excel = new ExcelPackage(Existfile))
                 {
                     ExcelWorkbook workbook = excel.Workbook;
@@ -172,14 +178,49 @@ namespace cip_api.controllers
 
                     for (int row = 3; row <= rowCount; row += 1)
                     {
+                        string cipNo = ""; string subCipNo = ""; string boi = "";
                         for (int col = 1; col < colCount; col += 1)
                         {
+                            string value = sheet.Cells[row, col].Value?.ToString();
+                            if (value == null || value == "")
+                            {
+                                value = "-";
+                            }
+
                             switch (col)
                             {
-                                case 1: Console.WriteLine(""); break;
+                                case 3: cipNo = value; break;
+                                case 4: subCipNo = value; break;
+                                case 48: boi = value; break;
                             }
                         }
+                        if (cipNo == "-")
+                        {
+                            break;
+                        }
+                        cipSchema cip = db.CIP.Where<cipSchema>(item => item.cipNo == cipNo && item.subCipNo == subCipNo).FirstOrDefault();
+                        if (cip != null) {
+                            cip.status = "itc-confirmed";
+                            updateCip.Add(cip);
+
+                            cipUpdateSchema cipUpdate = db.CIP_UPDATE.Where<cipUpdateSchema>(cipUpdate => cipUpdate.cipSchemaid == cip.id).FirstOrDefault();
+
+                            cipUpdate.boiType = boi;
+                            updateItem.Add(cipUpdate);
+
+                            approve.Add(new ApprovalSchema {
+                                onApproveStep = "itc-confirmed",
+                                cipSchemaid = cip.id,
+                                empNo = username,
+                                date = DateTime.Now.ToString("yyyy/MM/dd"),
+                            });
+                        }
                     }
+
+                    db.CIP.UpdateRange(updateCip);
+                    db.CIP_UPDATE.UpdateRange(updateItem);
+                    db.APPROVAL.AddRange(approve);
+                    db.SaveChanges();
                 }
                 return Ok(new { success = true, message = "ITC confirm success." });
             }
