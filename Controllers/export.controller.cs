@@ -174,48 +174,48 @@ namespace cip_api.controllers
                                 {
                                     var searchCell = from cell in worksheet.Cells["E1:E" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
                                     string rowNumber = searchCell.First().ToString();
-                                    worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.planDate;
-                                    worksheet.Cells["AD" + rowNumber].Value = cip.cipUpdate.actDate;
-                                    worksheet.Cells["AE" + rowNumber].Value = cip.cipUpdate.result;
-                                    worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.reasonDiff;
-                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
-                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.fixAssetName;
-                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.serialNo;
-                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
-                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.processDie;
-                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.model;
-                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
-                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
-                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.upFixAsset;
-                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
-                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AC" + rowNumber].Value = (cip.cipUpdate.planDate == "-") ? "" : cip.cipUpdate.planDate;
+                                    worksheet.Cells["AD" + rowNumber].Value = (cip.cipUpdate.actDate == "-") ? "" : cip.cipUpdate.actDate;
+                                    worksheet.Cells["AE" + rowNumber].Value = (cip.cipUpdate.result == "-") ? "" : cip.cipUpdate.result;
+                                    worksheet.Cells["AF" + rowNumber].Value = (cip.cipUpdate.reasonDiff == "-") ? "" : cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AG" + rowNumber].Value = (cip.cipUpdate.fixedAssetCode == "-") ? "" : cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AH" + rowNumber].Value = (cip.cipUpdate.classFixedAsset == "-") ? "" : cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AI" + rowNumber].Value = (cip.cipUpdate.fixAssetName == "-") ? "" : cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AJ" + rowNumber].Value = (cip.cipUpdate.serialNo == "-") ? "-" : cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AK" + rowNumber].Value = (cip.cipUpdate.partNumberDieNo == "-") ? "" : cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AL" + rowNumber].Value = (cip.cipUpdate.processDie == "-") ? "" : cip.cipUpdate.processDie;
+                                    worksheet.Cells["AM" + rowNumber].Value = (cip.cipUpdate.model == "-") ? "" : cip.cipUpdate.model;
+                                    worksheet.Cells["AN" + rowNumber].Value = (cip.cipUpdate.costCenterOfUser == "-") ? "" : cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AO" + rowNumber].Value = (cip.cipUpdate.tranferToSupplier == "-") ? "" : cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AP" + rowNumber].Value = (cip.cipUpdate.upFixAsset == "-") ? "" : cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AQ" + rowNumber].Value = (cip.cipUpdate.newBFMorAddBFM == "-") ? "" : cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AR" + rowNumber].Value = (cip.cipUpdate.reasonForDelay == "-") ? "" : cip.cipUpdate.reasonForDelay;
                                     worksheet.Cells["AS" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
-                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.remark;
+                                    worksheet.Cells["AT" + rowNumber].Value = (cip.cipUpdate.remark == "-") ? "" : cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Domestic-DIE")
                                 {
                                     var searchCell = from cell in worksheet.Cells["C1:C" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
                                     string rowNumber = searchCell.First().ToString();
 
-                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.planDate;
-                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.actDate;
-                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.result;
-                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.reasonDiff;
-                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
-                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.fixAssetName;
-                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.serialNo;
-                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
-                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.processDie;
-                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.model;
-                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
-                                    worksheet.Cells["AS" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
-                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.upFixAsset;
-                                    worksheet.Cells["AU" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
-                                    worksheet.Cells["AV" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AG" + rowNumber].Value = (cip.cipUpdate.planDate == "-") ? "" : cip.cipUpdate.planDate;
+                                    worksheet.Cells["AH" + rowNumber].Value = (cip.cipUpdate.actDate == "-") ? "" : cip.cipUpdate.actDate;
+                                    worksheet.Cells["AI" + rowNumber].Value = (cip.cipUpdate.result == "-") ? "" : cip.cipUpdate.result;
+                                    worksheet.Cells["AJ" + rowNumber].Value = (cip.cipUpdate.reasonDiff == "-") ? "" : cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AK" + rowNumber].Value = (cip.cipUpdate.fixedAssetCode == "-") ? "" : cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AL" + rowNumber].Value = (cip.cipUpdate.classFixedAsset == "-") ? "" : cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AM" + rowNumber].Value = (cip.cipUpdate.fixAssetName == "-") ? "" : cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AN" + rowNumber].Value = (cip.cipUpdate.serialNo == "-") ? "-" : cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AO" + rowNumber].Value = (cip.cipUpdate.partNumberDieNo == "-") ? "" : cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AP" + rowNumber].Value = (cip.cipUpdate.processDie == "-") ? "" : cip.cipUpdate.processDie;
+                                    worksheet.Cells["AQ" + rowNumber].Value = (cip.cipUpdate.model == "-") ? "" : cip.cipUpdate.model;
+                                    worksheet.Cells["AR" + rowNumber].Value = (cip.cipUpdate.costCenterOfUser == "-") ? "" : cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AS" + rowNumber].Value = (cip.cipUpdate.tranferToSupplier == "-") ? "" : cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AT" + rowNumber].Value = (cip.cipUpdate.upFixAsset == "-") ? "" : cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AU" + rowNumber].Value = (cip.cipUpdate.newBFMorAddBFM == "-") ? "" : cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AV" + rowNumber].Value = (cip.cipUpdate.reasonForDelay == "-") ? "" : cip.cipUpdate.reasonForDelay;
                                     worksheet.Cells["AW" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
-                                    worksheet.Cells["AX" + rowNumber].Value = cip.cipUpdate.remark;
+                                    worksheet.Cells["AX" + rowNumber].Value = (cip.cipUpdate.remark == "-") ? "" : cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Oversea")
                                 {
@@ -237,24 +237,24 @@ namespace cip_api.controllers
                                     }
                                     rownum = string.Join("", rownum.ToCharArray().Where(Char.IsDigit));
 
-                                    worksheet.Cells["AO" + rownum].Value = cip.cipUpdate.planDate;
-                                    worksheet.Cells["AP" + rownum].Value = cip.cipUpdate.actDate;
-                                    worksheet.Cells["AQ" + rownum].Value = cip.cipUpdate.result;
-                                    worksheet.Cells["AR" + rownum].Value = cip.cipUpdate.reasonDiff;
-                                    worksheet.Cells["AS" + rownum].Value = cip.cipUpdate.fixedAssetCode;
-                                    worksheet.Cells["AT" + rownum].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AU" + rownum].Value = cip.cipUpdate.fixAssetName;
-                                    worksheet.Cells["AV" + rownum].Value = cip.cipUpdate.serialNo;
-                                    worksheet.Cells["AW" + rownum].Value = cip.cipUpdate.partNumberDieNo;
-                                    worksheet.Cells["AX" + rownum].Value = cip.cipUpdate.processDie;
-                                    worksheet.Cells["AY" + rownum].Value = cip.cipUpdate.model;
-                                    worksheet.Cells["AZ" + rownum].Value = cip.cipUpdate.costCenterOfUser;
-                                    worksheet.Cells["BA" + rownum].Value = cip.cipUpdate.tranferToSupplier;
-                                    worksheet.Cells["BB" + rownum].Value = cip.cipUpdate.upFixAsset;
-                                    worksheet.Cells["BC" + rownum].Value = cip.cipUpdate.newBFMorAddBFM;
-                                    worksheet.Cells["BD" + rownum].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AO" + rownum].Value = (cip.cipUpdate.planDate == "-") ? "" : cip.cipUpdate.planDate;
+                                    worksheet.Cells["AP" + rownum].Value = (cip.cipUpdate.actDate == "-") ? "" : cip.cipUpdate.actDate;
+                                    worksheet.Cells["AQ" + rownum].Value = (cip.cipUpdate.result == "-") ? "" : cip.cipUpdate.result;
+                                    worksheet.Cells["AR" + rownum].Value = (cip.cipUpdate.reasonDiff == "-") ? "" : cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AS" + rownum].Value = (cip.cipUpdate.fixedAssetCode == "-") ? "" : cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AT" + rownum].Value = (cip.cipUpdate.classFixedAsset == "-") ? "" : cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AU" + rownum].Value = (cip.cipUpdate.fixAssetName == "-") ? "" : cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AV" + rownum].Value = (cip.cipUpdate.serialNo == "-") ? "-" : cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AW" + rownum].Value = (cip.cipUpdate.partNumberDieNo == "-") ? "" : cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AX" + rownum].Value = (cip.cipUpdate.processDie == "-") ? "" : cip.cipUpdate.processDie;
+                                    worksheet.Cells["AY" + rownum].Value = (cip.cipUpdate.model == "-") ? "" : cip.cipUpdate.model;
+                                    worksheet.Cells["AZ" + rownum].Value = (cip.cipUpdate.costCenterOfUser == "-") ? "" : cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["BA" + rownum].Value = (cip.cipUpdate.tranferToSupplier == "-") ? "" : cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["BB" + rownum].Value = (cip.cipUpdate.upFixAsset == "-") ? "" : cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["BC" + rownum].Value = (cip.cipUpdate.newBFMorAddBFM == "-") ? "" : cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["BD" + rownum].Value = (cip.cipUpdate.reasonForDelay == "-") ? "" : cip.cipUpdate.reasonForDelay;
                                     // worksheet.Cells["AM" + rownum].Value = (item.cipUpdate.addCipBfmNo == "-") ? "" : item.cipUpdate.addCipBfmNo;
-                                    worksheet.Cells["BE" + rownum].Value = cip.cipUpdate.remark;
+                                    worksheet.Cells["BE" + rownum].Value = (cip.cipUpdate.remark == "-") ? "" : cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Domestic")
                                 {
@@ -264,48 +264,48 @@ namespace cip_api.controllers
 
                                     string rowNumber = searchCell.First().ToString();
 
-                                    worksheet.Cells["W" + rowNumber].Value = cip.cipUpdate.planDate;
-                                    worksheet.Cells["X" + rowNumber].Value = cip.cipUpdate.actDate;
-                                    worksheet.Cells["Y" + rowNumber].Value = cip.cipUpdate.result;
-                                    worksheet.Cells["Z" + rowNumber].Value = cip.cipUpdate.reasonDiff;
-                                    worksheet.Cells["AA" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
-                                    worksheet.Cells["AB" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.fixAssetName;
-                                    worksheet.Cells["AD" + rowNumber].Value = cip.cipUpdate.serialNo;
-                                    worksheet.Cells["AE" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
-                                    worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.processDie;
-                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.model;
-                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
-                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
-                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.upFixAsset;
-                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
-                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["W" + rowNumber].Value = (cip.cipUpdate.planDate == "-") ? "" : cip.cipUpdate.planDate;
+                                    worksheet.Cells["X" + rowNumber].Value = (cip.cipUpdate.actDate == "-") ? "" : cip.cipUpdate.actDate;
+                                    worksheet.Cells["Y" + rowNumber].Value = (cip.cipUpdate.result == "-") ? "" : cip.cipUpdate.result;
+                                    worksheet.Cells["Z" + rowNumber].Value = (cip.cipUpdate.reasonDiff == "-") ? "" : cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AA" + rowNumber].Value = (cip.cipUpdate.fixedAssetCode == "-") ? "" : cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AB" + rowNumber].Value = (cip.cipUpdate.classFixedAsset == "-") ? "" : cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AC" + rowNumber].Value = (cip.cipUpdate.fixAssetName == "-") ? "" : cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AD" + rowNumber].Value = (cip.cipUpdate.serialNo == "-") ? "-" : cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AE" + rowNumber].Value = (cip.cipUpdate.partNumberDieNo == "-") ? "" : cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AF" + rowNumber].Value = (cip.cipUpdate.processDie == "-") ? "" : cip.cipUpdate.processDie;
+                                    worksheet.Cells["AG" + rowNumber].Value = (cip.cipUpdate.model == "-") ? "" : cip.cipUpdate.model;
+                                    worksheet.Cells["AH" + rowNumber].Value = (cip.cipUpdate.costCenterOfUser == "-") ? "" : cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AI" + rowNumber].Value = (cip.cipUpdate.tranferToSupplier == "-") ? "" : cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AJ" + rowNumber].Value = (cip.cipUpdate.upFixAsset == "-") ? "" : cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AK" + rowNumber].Value = (cip.cipUpdate.newBFMorAddBFM == "-") ? "" : cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AL" + rowNumber].Value = (cip.cipUpdate.reasonForDelay == "-") ? "" : cip.cipUpdate.reasonForDelay;
                                     worksheet.Cells["AM" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
-                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.remark;
+                                    worksheet.Cells["AN" + rowNumber].Value = (cip.cipUpdate.remark == "-") ? "" : cip.cipUpdate.remark;
                                 }
                                 else if (body.workType == "Project-MSC")
                                 {
                                     var searchCell = from cell in worksheet.Cells["E3:E" + rowEnd.ToString()] where cell.Value.ToString() == cip.cipNo select cell.Start.Row;
                                     string rowNumber = searchCell.First().ToString();
 
-                                    worksheet.Cells["AC" + rowNumber].Value = cip.cipUpdate.planDate;
-                                    worksheet.Cells["AD" + rowNumber].Value = cip.cipUpdate.actDate;
-                                    worksheet.Cells["AE" + rowNumber].Value = cip.cipUpdate.result;
-                                    worksheet.Cells["AF" + rowNumber].Value = cip.cipUpdate.reasonDiff;
-                                    worksheet.Cells["AG" + rowNumber].Value = cip.cipUpdate.fixedAssetCode;
-                                    worksheet.Cells["AH" + rowNumber].Value = cip.cipUpdate.classFixedAsset;
-                                    worksheet.Cells["AI" + rowNumber].Value = cip.cipUpdate.fixAssetName;
-                                    worksheet.Cells["AJ" + rowNumber].Value = cip.cipUpdate.serialNo;
-                                    worksheet.Cells["AK" + rowNumber].Value = cip.cipUpdate.partNumberDieNo;
-                                    worksheet.Cells["AL" + rowNumber].Value = cip.cipUpdate.processDie;
-                                    worksheet.Cells["AM" + rowNumber].Value = cip.cipUpdate.model;
-                                    worksheet.Cells["AN" + rowNumber].Value = cip.cipUpdate.costCenterOfUser;
-                                    worksheet.Cells["AO" + rowNumber].Value = cip.cipUpdate.tranferToSupplier;
-                                    worksheet.Cells["AP" + rowNumber].Value = cip.cipUpdate.upFixAsset;
-                                    worksheet.Cells["AQ" + rowNumber].Value = cip.cipUpdate.newBFMorAddBFM;
-                                    worksheet.Cells["AR" + rowNumber].Value = cip.cipUpdate.reasonForDelay;
+                                    worksheet.Cells["AC" + rowNumber].Value = (cip.cipUpdate.planDate == "-") ? "" : cip.cipUpdate.planDate;
+                                    worksheet.Cells["AD" + rowNumber].Value = (cip.cipUpdate.actDate == "-") ? "" : cip.cipUpdate.actDate;
+                                    worksheet.Cells["AE" + rowNumber].Value = (cip.cipUpdate.result == "-") ? "" : cip.cipUpdate.result;
+                                    worksheet.Cells["AF" + rowNumber].Value = (cip.cipUpdate.reasonDiff == "-") ? "" : cip.cipUpdate.reasonDiff;
+                                    worksheet.Cells["AG" + rowNumber].Value = (cip.cipUpdate.fixedAssetCode == "-") ? "" : cip.cipUpdate.fixedAssetCode;
+                                    worksheet.Cells["AH" + rowNumber].Value = (cip.cipUpdate.classFixedAsset == "-") ? "" : cip.cipUpdate.classFixedAsset;
+                                    worksheet.Cells["AI" + rowNumber].Value = (cip.cipUpdate.fixAssetName == "-") ? "" : cip.cipUpdate.fixAssetName;
+                                    worksheet.Cells["AJ" + rowNumber].Value = (cip.cipUpdate.serialNo == "-") ? "-" : cip.cipUpdate.serialNo;
+                                    worksheet.Cells["AK" + rowNumber].Value = (cip.cipUpdate.partNumberDieNo == "-") ? "" : cip.cipUpdate.partNumberDieNo;
+                                    worksheet.Cells["AL" + rowNumber].Value = (cip.cipUpdate.processDie == "-") ? "" : cip.cipUpdate.processDie;
+                                    worksheet.Cells["AM" + rowNumber].Value = (cip.cipUpdate.model == "-") ? "" : cip.cipUpdate.model;
+                                    worksheet.Cells["AN" + rowNumber].Value = (cip.cipUpdate.costCenterOfUser == "-") ? "" : cip.cipUpdate.costCenterOfUser;
+                                    worksheet.Cells["AO" + rowNumber].Value = (cip.cipUpdate.tranferToSupplier == "-") ? "" : cip.cipUpdate.tranferToSupplier;
+                                    worksheet.Cells["AP" + rowNumber].Value = (cip.cipUpdate.upFixAsset == "-") ? "" : cip.cipUpdate.upFixAsset;
+                                    worksheet.Cells["AQ" + rowNumber].Value = (cip.cipUpdate.newBFMorAddBFM == "-") ? "" : cip.cipUpdate.newBFMorAddBFM;
+                                    worksheet.Cells["AR" + rowNumber].Value = (cip.cipUpdate.reasonForDelay == "-") ? "" : cip.cipUpdate.reasonForDelay;
                                     worksheet.Cells["AS" + rowNumber].Value = (cip.cipUpdate.addCipBfmNo == "-") ? "" : cip.cipUpdate.addCipBfmNo;
-                                    worksheet.Cells["AT" + rowNumber].Value = cip.cipUpdate.remark;
+                                    worksheet.Cells["AT" + rowNumber].Value = (cip.cipUpdate.remark == "-") ? "" : cip.cipUpdate.remark;
                                 }
 
                                 successCip.Add(cip.cipNo);

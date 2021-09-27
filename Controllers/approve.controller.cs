@@ -12,6 +12,7 @@ using System.IO;
 using System.Drawing;
 using OfficeOpenXml;
 using OfficeOpenXml.DataValidation.Contracts;
+using System.Globalization;
 
 namespace cip_api.controllers
 {
@@ -1115,6 +1116,8 @@ namespace cip_api.controllers
                         {
                             userSchema userSave = db.USERS.Find(save.empNo);
                             worksheet.Cells["AW" + row].Value = userSave.name;
+                            DateTime dateFormat = DateTime.ParseExact(save.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["AW" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
 
                         ApprovalSchema ccCheck = approve.Find(action => action.onApproveStep == "cc-checked");
@@ -1123,6 +1126,8 @@ namespace cip_api.controllers
                         {
                             userSchema userCheck = db.USERS.Find(ccCheck.empNo);
                             worksheet.Cells["AX" + row].Value = userCheck.name;
+                            DateTime dateFormat = DateTime.ParseExact(ccCheck.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["AX" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
 
                         ApprovalSchema ccApprove = approve.Find(action => action.onApproveStep == "cc-approved");
@@ -1131,6 +1136,8 @@ namespace cip_api.controllers
                         {
                             userSchema userApprove = db.USERS.Find(ccApprove.empNo);
                             worksheet.Cells["AY" + row].Value = userApprove.name;
+                            DateTime dateFormat = DateTime.ParseExact(ccApprove.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["AY" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
 
                         ApprovalSchema costPrepare = approve.Find(action => action.onApproveStep == "cost-prepared");
@@ -1138,31 +1145,41 @@ namespace cip_api.controllers
                         {
                             userSchema userCostPrepare = db.USERS.Find(costPrepare.empNo);
                             worksheet.Cells["AZ" + row].Value = userCostPrepare.name;
+                            DateTime dateFormat = DateTime.ParseExact(costPrepare.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["AZ" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
                         ApprovalSchema costCheck = approve.Find(action => action.onApproveStep == "cost-checked");
                         if (costCheck != null)
                         {
                             userSchema costUserCheck = db.USERS.Find(costCheck.empNo);
                             worksheet.Cells["BA" + row].Value = costUserCheck.name;
+                            DateTime dateFormat = DateTime.ParseExact(costCheck.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["BA" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
                         ApprovalSchema costApprove = approve.Find(action => action.onApproveStep == "cost-approved");
                         if (costApprove != null)
                         {
                             userSchema costUserApprove = db.USERS.Find(costApprove.empNo);
                             worksheet.Cells["BB" + row].Value = costUserApprove.name;
+                            DateTime dateFormat = DateTime.ParseExact(costApprove.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["BB" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
-
                         ApprovalSchema itcConfirm = approve.Find(action => action.onApproveStep == "itc-confirmed");
 
                         if (itcConfirm != null)
                         {
                             userSchema itcConfirmUser = db.USERS.Find(itcConfirm.empNo);
+                            worksheet.Cells["BC" + row].Value = itcConfirmUser.name;
+                            DateTime dateFormat = DateTime.ParseExact(itcConfirm.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["BC" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
                         ApprovalSchema diffChecked = approve.Find(action => action.onApproveStep == "diff-checked");
                         if (diffChecked != null)
                         {
                             userSchema accDiffChecker = db.USERS.Find(diffChecked.empNo);
                             worksheet.Cells["BD" + row].Value = accDiffChecker.name;
+                            DateTime dateFormat = DateTime.ParseExact(diffChecked.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["BD" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
 
                         ApprovalSchema diffApproved = approve.Find(action => action.onApproveStep == "diff-approved");
@@ -1170,6 +1187,8 @@ namespace cip_api.controllers
                         {
                             userSchema diffApproveUser = db.USERS.Find(diffApproved.empNo);
                             worksheet.Cells["BE" + row].Value = diffApproveUser.name;
+                            DateTime dateFormat = DateTime.ParseExact(diffApproved.date.ToString(), "yyyy/MM/dd", CultureInfo.InstalledUICulture);
+                            worksheet.Cells["BE" + row].AddComment(dateFormat.ToString("dd MMMM yyyy"), "system");
                         }
 
 
@@ -1186,6 +1205,7 @@ namespace cip_api.controllers
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                Console.WriteLine(e.Message);
                 return Problem(e.StackTrace);
             }
         }
