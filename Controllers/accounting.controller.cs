@@ -419,7 +419,7 @@ namespace cip_api.controllers
                     }
                     else if (item.status == "cost-approved")
                     {
-                        if (item.cipUpdate.result.ToLower() == "ng" && (item.cipUpdate.costCenterOfUser != "5110" && item.cipUpdate.tranferToSupplier != "-"))
+                        if (item.cipUpdate.result.ToLower() == "ng" && (item.cipUpdate.costCenterOfUser != "5110" && item.cipUpdate.tranferToSupplier == "-"))
                         {
                             returnData.Add(item);
                         }

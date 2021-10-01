@@ -58,7 +58,7 @@ namespace cip_api.models
         [Column(TypeName = "nvarchar"), StringLength(60)]
         public string newBFMorAddBFM { get; set; }
 
-        [Column(TypeName = "nvarchar"), StringLength(160)]
+        [Column(TypeName = "nvarchar"), StringLength(300)]
         public string reasonForDelay { get; set; }
 
         [Column(TypeName = "nvarchar"), StringLength(160)]
