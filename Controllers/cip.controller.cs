@@ -417,7 +417,7 @@ namespace cip_api.controllers
             if (User.FindFirst("dept").Value.ToLower() == "acc")
             {
                 data = db.CIP.Where<cipSchema>(item => item.status != "finished").ToList<cipSchema>();
-                return Ok(new { success = true, data, });
+                return Ok(new { success = true, data, isAcc = true });
             }
             string deptCode = User.FindFirst("deptCode")?.Value;
 
@@ -476,7 +476,7 @@ namespace cip_api.controllers
                     }
                 }
             }
-            return Ok(new { success = true, data = response, });
+            return Ok(new { success = true, data = response, isAcc = false, });
         }
         [HttpGet("history")]
         public ActionResult history()
