@@ -255,14 +255,6 @@ namespace cip_api.controllers
                     // List<string> ccDept = excelData.Select(c => c.cc).Distinct().ToList();
 
                     // string mailBody = "TO : All Concerned \n \n I would like to Confirm CIP-Domestic and Oversea. \n At link <WEB APP LINK> \n Please, input data pink area (data for user confirm). \n";
-                    // mailBody += "\n\n\n Thank You \n Best Regards \n";
-                    // mailBody += "**************************************************** \n";
-                    // mailBody += "\t\t\t " + " " + User.FindFirst("name")?.Value + " \n";
-                    // mailBody += "\t\t\t Accounting Dept. \n";
-                    // mailBody += "\t\t Canon Prachinburi (Thailand) Ltd. \n";
-                    // mailBody += "\t\t E-mail : " + acc_user.email + " \n";
-                    // mailBody += "\t\t   " + "☎ : 037-284600 Ext.8114" + " \n";
-                    // mailBody += "****************************************************";
                     // foreach (string cc in ccDept)
                     // {
                     //     List<PermissionSchema> ccPrepare = db.PERMISSIONS.Where<PermissionSchema>(item => item.deptCode.IndexOf(cc) != -1 && item.action == "prepare").ToList();
